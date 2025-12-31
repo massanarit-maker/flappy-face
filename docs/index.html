@@ -8,257 +8,258 @@
 <style>
 html, body {
   margin: 0;
-  padding: 0;
-  background: #0b1220;
-  color: #fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  height: 100%;
-  overflow: hidden;
-}
-
-#game {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-}
-
-canvas {
-  display: block;
-  margin: 0 auto;
-  background: linear-gradient(#101c36, #070c18);
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(5,10,20,.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-}
-
-.modal {
-  background: #111b33;
-  border-radius: 16px;
-  padding: 20px;
-  width: min(92vw, 520px);
-  box-shadow: 0 0 40px rgba(0,0,0,.6);
-}
-
-h2 {
-  margin: 0 0 10px 0;
-  font-size: 20px;
-}
-
-.small {
-  font-size: 12px;
-  opacity: .85;
-}
-
-.photoWrap {
-  position: relative;
-  margin-top: 10px;
-}
-
-.photoWrap img {
-  width: 100%;
-  border-radius: 10px;
-  display: block;
-}
-
-.photoWrap canvas {
-  position: absolute;
-  inset: 0;
-}
-
-.field {
-  margin-top: 10px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
-}
-
-button {
-  margin-top: 12px;
-  width: 100%;
-  padding: 12px;
-  font-size: 15px;
-  border-radius: 10px;
-  border: none;
-  background: #4f8cff;
-  color: #fff;
-  cursor: pointer;
-}
-
-button:hover { opacity: .9; }
-
-#leaderboard {
-  margin-top: 10px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-
-.hidden { display: none; }
-</style>
-</head>
-
-<body>
-<div id="game">
-  <canvas id="gameCanvas"></canvas>
-
-  <!-- PLAYER SELECT -->
-  <div class="overlay" id="overlay">
-    <div class="modal">
-      <h2>Pick Your Face, Enter Your Username</h2>
-      <div class="small">
-        Drag a box over your face in the family photo. On iPhone, press and drag.
-      </div>
-
-      <div class="photoWrap">
-        <img src="./family-photo-123.jpg" alt="Family Photo">
-
-        <canvas id="selector"></canvas>
-      </div>
-
-      <div class="field">
-        <input id="username" placeholder="Type a username" autocomplete="off"/>
-      </div>
-
-      <button id="startBtn">Start Game</button>
-      <div class="small" id="startError"></div>
-    </div>
-  </div>
-
-  <!-- GAME OVER -->
-  <div class="overlay hidden" id="gameOver">
-    <div class="modal">
-      <h2>Game Over</h2>
-      <div id="rankText" class="small"></div>
-
-      <h3>Top 10 Leaderboard</h3>
-      <div id="leaderboard"></div>
-
-      <button onclick="location.reload()">Play Again</button>
-    </div>
-  </div>
-</div>
-
-<script>
-/* ---------- LEADERBOARD ---------- */
-function getScores() {
-  return JSON.parse(localStorage.getItem("scores") || "{}");
-}
-function saveScore(user, score) {
-  const scores = getScores();
-  scores[user] = Math.max(scores[user] || 0, score);
-  localStorage.setItem("scores", JSON.stringify(scores));
-}
-function topScores() {
-  return Object.entries(getScores())
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,10);
-}
-
-/* ---------- FACE SELECT ---------- */
-const img = document.querySelector(".photoWrap img");
-const sel = document.getElementById("selector");
-const ctxSel = sel.getContext("2d");
-let box = null, dragging = false, sx, sy;
-
-function resizeSelector() {
-  sel.width = img.clientWidth;
-  sel.height = img.clientHeight;
-}
-window.addEventListener("resize", resizeSelector);
-img.onload = resizeSelector;
-
-sel.addEventListener("pointerdown", e => {
-  dragging = true;
-  sx = e.offsetX;
-  sy = e.offsetY;
-});
-sel.addEventListener("pointermove", e => {
-  if(!dragging) return;
-  box = {x:sx,y:sy,w:e.offsetX-sx,h:e.offsetY-sy};
-  ctxSel.clearRect(0,0,sel.width,sel.height);
-  ctxSel.strokeStyle="#4f8cff";
-  ctxSel.lineWidth=2;
-  ctxSel.strokeRect(box.x,box.y,box.w,box.h);
-});
-sel.addEventListener("pointerup",()=>dragging=false);
-
-/* ---------- GAME ---------- */
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-function resizeGame(){
-  canvas.width=window.innerWidth;
-  canvas.height=window.innerHeight;
-}
-resizeGame(); window.addEventListener("resize",resizeGame);
-
-let y=canvas.height/2, v=0, score=0, running=false;
-
-document.getElementById("startBtn").onclick=()=>{
-  const user=document.getElementById("username").value.trim();
-  if(!user||!box){
-    document.getElementById("startError").textContent="Username and face required.";
-    return;
-  }
-  document.getElementById("overlay").classList.add("hidden");
-  running=true;
-  loop();
-};
-
-function loop(){
-  if(!running) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  v+=0.5; y+=v;
-  if(y<0||y>canvas.height){
-    endGame();
-    return;
-  }
-  ctx.fillStyle="#fff";
-  ctx.beginPath();
-  ctx.arc(canvas.width/4,y,18,0,Math.PI*2);
-  ctx.fill();
-  score++;
-  requestAnimationFrame(loop);
-}
-
-window.addEventListener("pointerdown",()=>v=-8);
-
-function endGame(){
-  running=false;
-  const user=document.getElementById("username").value.trim();
-  saveScore(user,score);
-
-  const scores=Object.entries(getScores()).sort((a,b)=>b[1]-a[1]);
-  const rank=scores.findIndex(s=>s[0]===user)+1;
-
-  document.getElementById("rankText").textContent=
-    `Your rank: #${rank} of ${scores.length}`;
-
-  const lb=document.getElementById("leaderboard");
-  lb.innerHTML="";
-  topScores().forEach((s,i)=>{
-    lb.innerHTML+=`<div class="row"><span>#${i+1} ${s[0]}</span><span>${s[1]}</span></div>`;
-  });
-
-  document.getElementById("gameOver").classList.remove("hidden");
-}
-</script>
-</body>
-</html>
+    padding: 0;
+      background: #0b1220;
+        color: #fff;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            height: 100%;
+              overflow: hidden;
+              }
+              
+              #game {
+                position: relative;
+                  width: 100vw;
+                    height: 100vh;
+                    }
+                    
+                    canvas {
+                      display: block;
+                        margin: 0 auto;
+                          background: linear-gradient(#101c36, #070c18);
+                          }
+                          
+                          .overlay {
+                            position: absolute;
+                              inset: 0;
+                                background: rgba(5,10,20,.85);
+                                  display: flex;
+                                    align-items: center;
+                                      justify-content: center;
+                                        z-index: 5;
+                                        }
+                                        
+                                        .modal {
+                                          background: #111b33;
+                                            border-radius: 16px;
+                                              padding: 20px;
+                                                width: min(92vw, 520px);
+                                                  box-shadow: 0 0 40px rgba(0,0,0,.6);
+                                                  }
+                                                  
+                                                  h2 {
+                                                    margin: 0 0 10px 0;
+                                                      font-size: 20px;
+                                                      }
+                                                      
+                                                      .small {
+                                                        font-size: 12px;
+                                                          opacity: .85;
+                                                          }
+                                                          
+                                                          .photoWrap {
+                                                            position: relative;
+                                                              margin-top: 10px;
+                                                              }
+                                                              
+                                                              .photoWrap img {
+                                                                width: 100%;
+                                                                  border-radius: 10px;
+                                                                    display: block;
+                                                                    }
+                                                                    
+                                                                    .photoWrap canvas {
+                                                                      position: absolute;
+                                                                        inset: 0;
+                                                                        }
+                                                                        
+                                                                        .field {
+                                                                          margin-top: 10px;
+                                                                          }
+                                                                          
+                                                                          input {
+                                                                            width: 100%;
+                                                                              padding: 10px;
+                                                                                border-radius: 8px;
+                                                                                  border: none;
+                                                                                    font-size: 14px;
+                                                                                    }
+                                                                                    
+                                                                                    button {
+                                                                                      margin-top: 12px;
+                                                                                        width: 100%;
+                                                                                          padding: 12px;
+                                                                                            font-size: 15px;
+                                                                                              border-radius: 10px;
+                                                                                                border: none;
+                                                                                                  background: #4f8cff;
+                                                                                                    color: #fff;
+                                                                                                      cursor: pointer;
+                                                                                                      }
+                                                                                                      
+                                                                                                      button:hover { opacity: .9; }
+                                                                                                      
+                                                                                                      #leaderboard {
+                                                                                                        margin-top: 10px;
+                                                                                                          max-height: 260px;
+                                                                                                            overflow-y: auto;
+                                                                                                            }
+                                                                                                            
+                                                                                                            .row {
+                                                                                                              display: flex;
+                                                                                                                justify-content: space-between;
+                                                                                                                  padding: 6px 0;
+                                                                                                                    border-bottom: 1px solid rgba(255,255,255,.08);
+                                                                                                                    }
+                                                                                                                    
+                                                                                                                    .hidden { display: none; }
+                                                                                                                    </style>
+                                                                                                                    </head>
+                                                                                                                    
+                                                                                                                    <body>
+                                                                                                                    <div id="game">
+                                                                                                                      <canvas id="gameCanvas"></canvas>
+                                                                                                                      
+                                                                                                                        <!-- PLAYER SELECT -->
+                                                                                                                          <div class="overlay" id="overlay">
+                                                                                                                              <div class="modal">
+                                                                                                                                    <h2>Pick Your Face, Enter Your Username</h2>
+                                                                                                                                          <div class="small">
+                                                                                                                                                  Drag a box over your face in the family photo. On iPhone, press and drag.
+                                                                                                                                                        </div>
+                                                                                                                                                        
+                                                                                                                                                              <div class="photoWrap">
+                                                                                                                                                                      <img src="./family-photo-123.jpg" alt="Family Photo">
+                                                                                                                                                                      
+                                                                                                                                                                              <canvas id="selector"></canvas>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                    
+                                                                                                                                                                                          <div class="field">
+                                                                                                                                                                                                  <input id="username" placeholder="Type a username" autocomplete="off"/>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        
+                                                                                                                                                                                                              <button id="startBtn">Start Game</button>
+                                                                                                                                                                                                                    <div class="small" id="startError"></div>
+                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                          </div>
+                                                                                                                                                                                                                          
+                                                                                                                                                                                                                            <!-- GAME OVER -->
+                                                                                                                                                                                                                              <div class="overlay hidden" id="gameOver">
+                                                                                                                                                                                                                                  <div class="modal">
+                                                                                                                                                                                                                                        <h2>Game Over</h2>
+                                                                                                                                                                                                                                              <div id="rankText" class="small"></div>
+                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                    <h3>Top 10 Leaderboard</h3>
+                                                                                                                                                                                                                                                          <div id="leaderboard"></div>
+                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                <button onclick="location.reload()">Play Again</button>
+                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                      </div>
+                                                                                                                                                                                                                                                                      </div>
+                                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                      <script>
+                                                                                                                                                                                                                                                                      /* ---------- LEADERBOARD ---------- */
+                                                                                                                                                                                                                                                                      function getScores() {
+                                                                                                                                                                                                                                                                        return JSON.parse(localStorage.getItem("scores") || "{}");
+                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                        function saveScore(user, score) {
+                                                                                                                                                                                                                                                                          const scores = getScores();
+                                                                                                                                                                                                                                                                            scores[user] = Math.max(scores[user] || 0, score);
+                                                                                                                                                                                                                                                                              localStorage.setItem("scores", JSON.stringify(scores));
+                                                                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                                                                              function topScores() {
+                                                                                                                                                                                                                                                                                return Object.entries(getScores())
+                                                                                                                                                                                                                                                                                    .sort((a,b)=>b[1]-a[1])
+                                                                                                                                                                                                                                                                                        .slice(0,10);
+                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                        /* ---------- FACE SELECT ---------- */
+                                                                                                                                                                                                                                                                                        const img = document.querySelector(".photoWrap img");
+                                                                                                                                                                                                                                                                                        const sel = document.getElementById("selector");
+                                                                                                                                                                                                                                                                                        const ctxSel = sel.getContext("2d");
+                                                                                                                                                                                                                                                                                        let box = null, dragging = false, sx, sy;
+                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                        function resizeSelector() {
+                                                                                                                                                                                                                                                                                          sel.width = img.clientWidth;
+                                                                                                                                                                                                                                                                                            sel.height = img.clientHeight;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                            window.addEventListener("resize", resizeSelector);
+                                                                                                                                                                                                                                                                                            img.onload = resizeSelector;
+                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                            sel.addEventListener("pointerdown", e => {
+                                                                                                                                                                                                                                                                                              dragging = true;
+                                                                                                                                                                                                                                                                                                sx = e.offsetX;
+                                                                                                                                                                                                                                                                                                  sy = e.offsetY;
+                                                                                                                                                                                                                                                                                                  });
+                                                                                                                                                                                                                                                                                                  sel.addEventListener("pointermove", e => {
+                                                                                                                                                                                                                                                                                                    if(!dragging) return;
+                                                                                                                                                                                                                                                                                                      box = {x:sx,y:sy,w:e.offsetX-sx,h:e.offsetY-sy};
+                                                                                                                                                                                                                                                                                                        ctxSel.clearRect(0,0,sel.width,sel.height);
+                                                                                                                                                                                                                                                                                                          ctxSel.strokeStyle="#4f8cff";
+                                                                                                                                                                                                                                                                                                            ctxSel.lineWidth=2;
+                                                                                                                                                                                                                                                                                                              ctxSel.strokeRect(box.x,box.y,box.w,box.h);
+                                                                                                                                                                                                                                                                                                              });
+                                                                                                                                                                                                                                                                                                              sel.addEventListener("pointerup",()=>dragging=false);
+                                                                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                                              /* ---------- GAME ---------- */
+                                                                                                                                                                                                                                                                                                              const canvas = document.getElementById("gameCanvas");
+                                                                                                                                                                                                                                                                                                              const ctx = canvas.getContext("2d");
+                                                                                                                                                                                                                                                                                                              function resizeGame(){
+                                                                                                                                                                                                                                                                                                                canvas.width=window.innerWidth;
+                                                                                                                                                                                                                                                                                                                  canvas.height=window.innerHeight;
+                                                                                                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                                                                                                  resizeGame(); window.addEventListener("resize",resizeGame);
+                                                                                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                                                  let y=canvas.height/2, v=0, score=0, running=false;
+                                                                                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                                                  document.getElementById("startBtn").onclick=()=>{
+                                                                                                                                                                                                                                                                                                                    const user=document.getElementById("username").value.trim();
+                                                                                                                                                                                                                                                                                                                      if(!user||!box){
+                                                                                                                                                                                                                                                                                                                          document.getElementById("startError").textContent="Username and face required.";
+                                                                                                                                                                                                                                                                                                                              return;
+                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                  document.getElementById("overlay").classList.add("hidden");
+                                                                                                                                                                                                                                                                                                                                    running=true;
+                                                                                                                                                                                                                                                                                                                                      loop();
+                                                                                                                                                                                                                                                                                                                                      };
+                                                                                                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                      function loop(){
+                                                                                                                                                                                                                                                                                                                                        if(!running) return;
+                                                                                                                                                                                                                                                                                                                                          ctx.clearRect(0,0,canvas.width,canvas.height);
+                                                                                                                                                                                                                                                                                                                                            v+=0.5; y+=v;
+                                                                                                                                                                                                                                                                                                                                              if(y<0||y>canvas.height){
+                                                                                                                                                                                                                                                                                                                                                  endGame();
+                                                                                                                                                                                                                                                                                                                                                      return;
+                                                                                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                                                                                          ctx.fillStyle="#fff";
+                                                                                                                                                                                                                                                                                                                                                            ctx.beginPath();
+                                                                                                                                                                                                                                                                                                                                                              ctx.arc(canvas.width/4,y,18,0,Math.PI*2);
+                                                                                                                                                                                                                                                                                                                                                                ctx.fill();
+                                                                                                                                                                                                                                                                                                                                                                  score++;
+                                                                                                                                                                                                                                                                                                                                                                    requestAnimationFrame(loop);
+                                                                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                    window.addEventListener("pointerdown",()=>v=-8);
+                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                    function endGame(){
+                                                                                                                                                                                                                                                                                                                                                                      running=false;
+                                                                                                                                                                                                                                                                                                                                                                        const user=document.getElementById("username").value.trim();
+                                                                                                                                                                                                                                                                                                                                                                          saveScore(user,score);
+                                                                                                                                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                                                                                                            const scores=Object.entries(getScores()).sort((a,b)=>b[1]-a[1]);
+                                                                                                                                                                                                                                                                                                                                                                              const rank=scores.findIndex(s=>s[0]===user)+1;
+                                                                                                                                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                                                                                                                document.getElementById("rankText").textContent=
+                                                                                                                                                                                                                                                                                                                                                                                    `Your rank: #${rank} of ${scores.length}`;
+                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                      const lb=document.getElementById("leaderboard");
+                                                                                                                                                                                                                                                                                                                                                                                        lb.innerHTML="";
+                                                                                                                                                                                                                                                                                                                                                                                          topScores().forEach((s,i)=>{
+                                                                                                                                                                                                                                                                                                                                                                                              lb.innerHTML+=`<div class="row"><span>#${i+1} ${s[0]}</span><span>${s[1]}</span></div>`;
+                                                                                                                                                                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                  document.getElementById("gameOver").classList.remove("hidden");
+                                                                                                                                                                                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                                                                                                                                                                                  </script>
+                                                                                                                                                                                                                                                                                                                                                                                                  </body>
+                                                                                                                                                                                                                                                                                                                                                                                                  </html>
+                                                                                                                                                                                                                                                                                                                                                                                                  >
