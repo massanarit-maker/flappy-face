@@ -145,17 +145,17 @@ const uploadAvatar = multer({
 
 app.post("/api/upload-avatar", uploadAvatar.single("avatar"), (req, res) => {
   try {
-    const username = safeUsername(req.body.username);
     if (!req.file) {
       return res.status(400).json({ ok: false, error: "Missing avatar file" });
     }
+    const username = safeUsername(req.body.username);
     return res.json({ ok: true, avatarUrl: `/avatars/${encodeURIComponent(username)}.png` });
   } catch (e) {
     return res.status(500).json({ ok: false, error: "Avatar upload failed" });
   }
 });
 
-// ---------- NEW: Leaderboard endpoints (best score per username) ----------
+// ---------- Leaderboard endpoints (best score per username) ----------
 
 // Get top leaderboard
 app.get("/api/leaderboard", async (req, res) => {
@@ -210,6 +210,43 @@ app.post("/api/score", async (req, res) => {
     res.json({ ok: true, username, best: newBest });
   } catch (e) {
     res.status(500).json({ ok: false, error: "Failed to save score" });
+  }
+});
+
+// NEW: Get rank and total players for a username
+// Rank rule:
+// - Higher best score ranks higher
+// - If tied best score, earlier updated_at ranks higher (stable tie-break)
+app.get("/api/rank", async (req, res) => {
+  try {
+    const username = safeUsername(req.query.username);
+    if (!username) return res.status(400).json({ ok: false, error: "Missing username" });
+
+    const totalRow = await dbGet(`SELECT COUNT(*) AS total FROM leaderboard`, []);
+    const total = totalRow ? Number(totalRow.total) : 0;
+
+    const me = await dbGet(`SELECT best, updated_at FROM leaderboard WHERE username = ?`, [username]);
+    if (!me) {
+      return res.json({ ok: true, username, rank: null, total, best: null });
+    }
+
+    const best = Number(me.best);
+    const updatedAt = String(me.updated_at);
+
+    const aheadRow = await dbGet(
+      `SELECT COUNT(*) AS ahead
+       FROM leaderboard
+       WHERE best > ?
+          OR (best = ? AND updated_at < ?)`,
+      [best, best, updatedAt]
+    );
+
+    const ahead = aheadRow ? Number(aheadRow.ahead) : 0;
+    const rank = ahead + 1;
+
+    return res.json({ ok: true, username, rank, total, best });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: "Failed to load rank" });
   }
 });
 

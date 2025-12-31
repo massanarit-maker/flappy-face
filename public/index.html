@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root { color-scheme: dark; }
+    html, body { height: 100%; }
     body {
       margin: 0;
       background: #0b1220;
@@ -14,9 +15,27 @@
       display: flex;
       justify-content: center;
       padding: 14px;
+      overflow: auto; /* default */
     }
-    .wrap { width: 100%; max-width: 980px; }
-    .topbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:12px; }
+
+    /* App-like playing mode: no page scroll, everything fits */
+    body.playing {
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 980px;
+
+      /* Key change: make the layout fit the screen height */
+      height: calc(100vh - 20px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .topbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
     h1 { margin:0; font-size:28px; }
     .sub { opacity:0.85; font-size:14px; margin-top:4px; }
 
@@ -26,7 +45,7 @@
       padding:8px 12px; font-weight:600; font-size:14px;
     }
 
-    .panel { background:#111a2e; border:1px solid #22304f; border-radius:12px; padding:12px; margin-bottom:12px; }
+    .panel { background:#111a2e; border:1px solid #22304f; border-radius:12px; padding:12px; }
     .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content: space-between; }
 
     .btn {
@@ -45,20 +64,42 @@
       font-size:12px; overflow-x:auto; white-space:nowrap;
     }
 
-    .gameShell { background:#0b1220; border:1px solid #22304f; border-radius:12px; padding:12px; }
+    /* Game area must stretch to fill remaining height */
+    .gameShell {
+      background:#0b1220;
+      border:1px solid #22304f;
+      border-radius:12px;
+      padding:12px;
+
+      flex: 1;                 /* fills available vertical space */
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;           /* IMPORTANT for flex children sizing */
+    }
+
     canvas {
-      width:100%; height:auto; display:block;
+      width:100%;
+      height: 100%;            /* fills gameShell remaining height */
+      display:block;
       background: linear-gradient(#0e1a33, #08101f);
       border-radius:10px; border:1px solid #22304f;
       touch-action: manipulation;
+      flex: 1;
+      min-height: 0;
     }
-    .help { margin-top:10px; opacity:0.85; font-size:14px; line-height:1.4; }
+
+    .help { opacity:0.85; font-size:14px; line-height:1.4; }
     .kbd {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       padding:2px 6px; border:1px solid #22304f; border-radius:6px; background:#0b1220;
     }
 
-    /* Leaderboard */
+    /* Hide non-game panels while playing so everything fits */
+    body.playing #controlPanel { display: none; }
+    body.playing #pageLeaderboard { display: none; }
+
+    /* Leaderboard (page section, hidden during play) */
     .lbTitle { font-size:16px; font-weight:800; margin:0 0 10px 0; }
     .lbBox {
       background:#0b1220; border:1px solid #22304f; border-radius:10px; padding:10px 12px;
@@ -85,6 +126,8 @@
       width:100%; max-width:860px;
       background:#111a2e; border:1px solid #22304f; border-radius:14px;
       padding:14px;
+      max-height: calc(100vh - 24px);
+      overflow:auto;
     }
     .modal h2 { margin:0 0 8px 0; font-size:20px; }
     .error { color:#ff7b72; font-weight:800; }
@@ -137,6 +180,42 @@
       width:56px; height:56px; border-radius:50%;
       border:1px solid #22304f; object-fit:cover; background:#0b1220;
     }
+
+    /* Game Over Popup leaderboard */
+    .goBox {
+      background:#0b1220;
+      border:1px solid #22304f;
+      border-radius:12px;
+      padding:12px;
+      margin-top:10px;
+    }
+    .goTitle { font-size:18px; font-weight:900; margin:0 0 8px 0; }
+    .goLine {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:13px;
+      opacity:0.92;
+      margin:6px 0;
+    }
+    .goLb {
+      margin-top:10px;
+      border:1px solid #22304f;
+      border-radius:10px;
+      background:#111a2e;
+      overflow:hidden;
+    }
+    .goLbRow {
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(34,48,79,0.55);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:13px;
+    }
+    .goLbRow:last-child { border-bottom:none; }
+    .goLbRank { width:44px; opacity:0.9; }
+    .goLbName { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .goLbScore { width:80px; text-align:right; font-weight:900; }
   </style>
 </head>
 <body>
@@ -157,14 +236,14 @@
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="controlPanel">
       <div class="row">
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <button id="check" class="btn" type="button">Check /healthz</button>
           <button id="restart" class="btn" type="button" disabled>Try Again</button>
           <button id="changePlayer" class="btn" type="button">Change Player</button>
         </div>
-        <button id="refreshLB" class="btn" type="button">Refresh Leaderboard</button>
+        <span class="small" style="opacity:0.75;">Leaderboard shows at Game Over</span>
       </div>
       <div id="status">Not checked yet</div>
     </div>
@@ -172,17 +251,17 @@
     <div class="gameShell">
       <canvas id="game" width="420" height="640" aria-label="Flappy game canvas"></canvas>
       <div class="help">
-        Controls: <span class="kbd">Tap</span> / <span class="kbd">Click</span> to flap. If you crash, press <span class="kbd">Try Again</span>.
+        Controls: <span class="kbd">Tap</span> / <span class="kbd">Click</span> to flap. If you crash, a Top 10 leaderboard pop-up will appear.
       </div>
     </div>
 
-    <div class="panel" style="margin-top:12px;">
+    <div class="panel" id="pageLeaderboard">
       <div class="lbTitle">Leaderboard (best score per username)</div>
       <div class="lbBox" id="lbBox">
         <div class="small" id="lbMsg">Loading…</div>
       </div>
       <div class="small" style="margin-top:10px;">
-        Notes: This is a simple family leaderboard (no passwords). We can add anti-cheat later if you want, but this keeps it stable.
+        This section is hidden during gameplay so the game behaves like an app (no scroll needed).
       </div>
     </div>
   </div>
@@ -227,6 +306,34 @@
     </div>
   </div>
 
+  <!-- Game Over Leaderboard Popup -->
+  <div class="overlay" id="gameOverOverlay" style="display:none;">
+    <div class="modal" style="max-width:520px;">
+      <div class="goBox">
+        <div class="goTitle">Game Over</div>
+        <div class="goLine" id="goScoreLine">Your score: 0</div>
+        <div class="goLine" id="goRankLine">Your rank: loading…</div>
+
+        <div class="small" style="margin-top:10px; opacity:0.85;">
+          Top 10 leaderboard:
+        </div>
+        <div class="goLb" id="goTop10">
+          <div class="goLbRow">
+            <div class="goLbRank">#</div>
+            <div class="goLbName">Loading…</div>
+            <div class="goLbScore"></div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px; justify-content:flex-start;">
+          <button id="goTryAgain" class="btn" type="button">Try Again</button>
+          <button id="goChangePlayer" class="btn" type="button">Change Player</button>
+          <button id="goClose" class="btn" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const dbgEl = document.getElementById("dbg");
     const statusEl = document.getElementById("status");
@@ -242,36 +349,37 @@
       }
     };
 
-    // Top UI
     const whoEl = document.getElementById("who");
     const scoreEl = document.getElementById("score");
     const bestEl = document.getElementById("best");
     const restartBtn = document.getElementById("restart");
     const changePlayerBtn = document.getElementById("changePlayer");
 
-    // Leaderboard UI
     const lbBox = document.getElementById("lbBox");
-    const lbMsg = document.getElementById("lbMsg");
-    const refreshLBBtn = document.getElementById("refreshLB");
 
-    // Overlay UI
     const overlay = document.getElementById("overlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+
+    const goScoreLine = document.getElementById("goScoreLine");
+    const goRankLine = document.getElementById("goRankLine");
+    const goTop10 = document.getElementById("goTop10");
+    const goTryAgain = document.getElementById("goTryAgain");
+    const goChangePlayer = document.getElementById("goChangePlayer");
+    const goClose = document.getElementById("goClose");
+
     const usernameInput = document.getElementById("username");
     const startBtn = document.getElementById("startBtn");
     const startError = document.getElementById("startError");
     const previewImg = document.getElementById("preview");
     const previewText = document.getElementById("previewText");
 
-    // Photo selector
     const familyImg = document.getElementById("familyPhoto");
     const selCanvas = document.getElementById("selector");
     const selCtx = selCanvas.getContext("2d");
 
-    // Game canvas
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
 
-    // Game constants
     const G = 1800;
     const FLAP_VY = -520;
     const PIPE_SPEED = 220;
@@ -280,7 +388,6 @@
     const PIPE_SPAWN_SEC = 1.25;
     const FLOOR_H = 80;
 
-    // State
     let selectedUsername = "";
     let selectedFaceUrl = null;
 
@@ -294,13 +401,20 @@
     let lastTs = 0;
     let spawnT = 0;
 
-    // Save score once per run
     let scoreSavedForThisRun = false;
 
-    // Face image for bird
+    let myRank = null;
+    let totalPlayers = null;
+    let rankLoading = false;
+
     let faceImg = new Image();
     let faceLoaded = false;
     let faceSrcActive = "";
+
+    function setPlayingMode(on) {
+      if (on) document.body.classList.add("playing");
+      else document.body.classList.remove("playing");
+    }
 
     function setFaceFromUrl(url) {
       faceLoaded = false;
@@ -316,6 +430,59 @@
       restartBtn.disabled = !enabled;
     }
 
+    function hideGameOverPopup() {
+      gameOverOverlay.style.display = "none";
+    }
+
+    async function showGameOverPopup() {
+      goScoreLine.textContent = `Your score: ${score}`;
+
+      if (rankLoading) goRankLine.textContent = "Your rank: loading…";
+      else if (myRank && totalPlayers) goRankLine.textContent = `Your rank: #${myRank} of ${totalPlayers}`;
+      else if (totalPlayers === 0) goRankLine.textContent = "Your rank: #1 of 1";
+      else goRankLine.textContent = "Your rank: unavailable";
+
+      goTop10.innerHTML = `
+        <div class="goLbRow">
+          <div class="goLbRank">#</div>
+          <div class="goLbName">Loading…</div>
+          <div class="goLbScore"></div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch("/api/leaderboard?limit=10", { cache: "no-store" });
+        const data = await res.json();
+        if (data && data.ok && Array.isArray(data.rows) && data.rows.length > 0) {
+          goTop10.innerHTML = data.rows.map((r, i) => `
+            <div class="goLbRow">
+              <div class="goLbRank">#${i + 1}</div>
+              <div class="goLbName">${escapeHtml(r.username)}</div>
+              <div class="goLbScore">${r.best}</div>
+            </div>
+          `).join("");
+        } else {
+          goTop10.innerHTML = `
+            <div class="goLbRow">
+              <div class="goLbRank">#</div>
+              <div class="goLbName">No scores yet</div>
+              <div class="goLbScore"></div>
+            </div>
+          `;
+        }
+      } catch (e) {
+        goTop10.innerHTML = `
+          <div class="goLbRow">
+            <div class="goLbRank">#</div>
+            <div class="goLbName">Could not load Top 10</div>
+            <div class="goLbScore"></div>
+          </div>
+        `;
+      }
+
+      gameOverOverlay.style.display = "flex";
+    }
+
     function resetGame() {
       setFaceFromUrl(selectedFaceUrl);
 
@@ -329,9 +496,15 @@
       lastTs = 0;
 
       scoreSavedForThisRun = false;
+      myRank = null;
+      totalPlayers = null;
+      rankLoading = false;
 
       scoreEl.textContent = "0";
       dbgEl.textContent = "running";
+
+      hideGameOverPopup();
+      setPlayingMode(true);
     }
 
     function flap() {
@@ -361,6 +534,22 @@
       return (dx * dx + dy * dy) <= (cr * cr);
     }
 
+    async function loadRank() {
+      if (!selectedUsername) return;
+      rankLoading = true;
+      try {
+        const res = await fetch(`/api/rank?username=${encodeURIComponent(selectedUsername)}`, { cache: "no-store" });
+        const data = await res.json();
+        if (data && data.ok) {
+          myRank = data.rank;
+          totalPlayers = data.total;
+        }
+      } catch (e) {
+      } finally {
+        rankLoading = false;
+      }
+    }
+
     async function saveScoreOnce() {
       if (!selectedUsername) return;
       if (scoreSavedForThisRun) return;
@@ -375,12 +564,16 @@
         const data = await res.json();
         if (data && data.ok) {
           dbgEl.textContent = "score saved";
-          await loadLeaderboard();
+          await loadRank();
+          await showGameOverPopup();
+          await loadPageLeaderboard();
         } else {
           dbgEl.textContent = "score save failed";
+          await showGameOverPopup();
         }
       } catch (e) {
         dbgEl.textContent = "score save error";
+        await showGameOverPopup();
       }
     }
 
@@ -418,7 +611,6 @@
       ctx.beginPath();
       ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI * 2);
       ctx.closePath();
-
       ctx.fillStyle = "#7cc4ff";
       ctx.fill();
       ctx.clip();
@@ -450,8 +642,6 @@
       ctx.fillStyle = "#7cc4ff";
       for (let i = 0; i < 8; i++) ctx.fillRect(i * 70, 0, 35, canvas.height);
       ctx.globalAlpha = 1;
-
-      if (!Array.isArray(pipes)) pipes = [];
 
       for (const p of pipes) {
         ctx.fillStyle = "#3fb950";
@@ -485,7 +675,7 @@
         ctx.textAlign = "center";
         ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 30);
         ctx.font = "16px Arial";
-        ctx.fillText("Press Try Again", canvas.width / 2, canvas.height / 2 + 10);
+        ctx.fillText("Leaderboard pop-up shown", canvas.width / 2, canvas.height / 2 + 10);
       } else if (score === 0 && pipes.length === 0) {
         ctx.fillStyle = "rgba(0,0,0,0.25)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -503,7 +693,6 @@
 
       if (selectedUsername && running && !gameOver) update(dt);
 
-      // Detect transition into game over (one time)
       if (selectedUsername) {
         if (!gameOverPrev && gameOver) {
           dbgEl.textContent = "game over";
@@ -528,8 +717,31 @@
       setTimeout(() => flap(), 50);
     });
 
-    // ---------- Face selection UI ----------
-    let sel = null; // {x0,y0,x1,y1} in DISPLAY pixels
+    goTryAgain.addEventListener("click", () => {
+      hideGameOverPopup();
+      restartBtn.click();
+    });
+    goChangePlayer.addEventListener("click", () => {
+      hideGameOverPopup();
+      setPlayingMode(false);
+      overlay.style.display = "flex";
+      setGameEnabled(false);
+      dbgEl.textContent = "overlay";
+    });
+    goClose.addEventListener("click", () => {
+      hideGameOverPopup();
+    });
+
+    changePlayerBtn.addEventListener("click", () => {
+      hideGameOverPopup();
+      overlay.style.display = "flex";
+      setPlayingMode(false);
+      setGameEnabled(false);
+      dbgEl.textContent = "overlay";
+    });
+
+    // Face selection UI
+    let sel = null;
     let dragging = false;
 
     function resizeSelectorCanvas() {
@@ -593,7 +805,6 @@
     window.addEventListener("resize", () => resizeSelectorCanvas());
     familyImg.addEventListener("load", () => { resizeSelectorCanvas(); dbgEl.textContent = "photo loaded"; });
 
-    // ---------- Username avatar loading / saving ----------
     async function loadExistingAvatar(username) {
       try {
         const res = await fetch(`/api/avatar?username=${encodeURIComponent(username)}`, { cache: "no-store" });
@@ -675,9 +886,8 @@
       return data.avatarUrl;
     }
 
-    // ---------- Leaderboard loading ----------
-    async function loadLeaderboard() {
-      lbBox.innerHTML = `<div class="small" id="lbMsg">Loading…</div>`;
+    async function loadPageLeaderboard() {
+      lbBox.innerHTML = `<div class="small">Loading…</div>`;
       try {
         const res = await fetch("/api/leaderboard?limit=20", { cache: "no-store" });
         const data = await res.json();
@@ -688,24 +898,15 @@
           return;
         }
 
-        const rows = data.rows
-          .map((r, i) => {
-            const rank = i + 1;
-            const name = r.username;
-            const best = r.best;
-            return `
-              <div class="lbRow">
-                <div class="lbRank">#${rank}</div>
-                <div class="lbName">${escapeHtml(name)}</div>
-                <div class="lbScore">${best}</div>
-              </div>
-            `;
-          })
-          .join("");
-
-        lbBox.innerHTML = rows;
+        lbBox.innerHTML = data.rows.map((r, i) => `
+          <div class="lbRow">
+            <div class="lbRank">#${i + 1}</div>
+            <div class="lbName">${escapeHtml(r.username)}</div>
+            <div class="lbScore">${r.best}</div>
+          </div>
+        `).join("");
       } catch (e) {
-        lbBox.innerHTML = `<div class="small">Could not load leaderboard (server error). Try Refresh Leaderboard.</div>`;
+        lbBox.innerHTML = `<div class="small">Could not load leaderboard.</div>`;
       }
     }
 
@@ -718,9 +919,6 @@
         .replaceAll("'", "&#039;");
     }
 
-    refreshLBBtn.addEventListener("click", () => loadLeaderboard());
-
-    // Start game button
     startBtn.addEventListener("click", async () => {
       startError.textContent = "";
       startError.classList.remove("error");
@@ -761,30 +959,24 @@
 
       overlay.style.display = "none";
       setGameEnabled(true);
+      setPlayingMode(true);
       resetGame();
       setTimeout(() => flap(), 50);
 
       dbgEl.textContent = "started";
-      loadLeaderboard();
+      loadPageLeaderboard();
     });
 
-    // Change player
-    changePlayerBtn.addEventListener("click", () => {
-      overlay.style.display = "flex";
-      setGameEnabled(false);
-      dbgEl.textContent = "overlay";
-    });
-
-    // init
     (function init() {
       best = 0;
       bestEl.textContent = "0";
       setGameEnabled(false);
+      setPlayingMode(false);
       overlay.style.display = "flex";
       whoEl.textContent = "Not set";
       dbgEl.textContent = "ready";
       usernameInput.focus();
-      loadLeaderboard();
+      loadPageLeaderboard();
     })();
   </script>
 </body>
