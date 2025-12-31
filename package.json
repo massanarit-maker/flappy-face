@@ -1,14 +1,14 @@
 {
   "name": "flappy-face",
   "version": "1.0.0",
-  "private": true,
-  "description": "Simple Flappy Bird-style web game",
+  "description": "Flappy Face - family contest game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "sqlite3": "^5.1.7"
   }
 }

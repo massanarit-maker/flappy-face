@@ -1,67 +1,76 @@
-// server.js
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
+const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
 const PORT = 3000;
 
-const CHARACTERS = ["Broxton", "Laurel", "Hendrix", "Maddox", "Phoenix", "Dad", "Mom"];
+// Parse JSON bodies
+app.use(express.json({ limit: "1mb" }));
 
+// ---------- Helpers ----------
+function ensureDir(dirPath) {
+  if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function safeUsername(input) {
+  const raw = String(input || "").trim().toLowerCase();
+  const cleaned = raw.replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "");
+  return cleaned || "player";
+}
+
+// ---------- Paths ----------
+const PUBLIC_DIR = path.join(__dirname, "public");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
-const FACES_JSON_PATH = path.join(UPLOADS_DIR, "faces.json");
+const FACES_DIR = path.join(UPLOADS_DIR, "faces");     // old character-based uploads (kept for no regressions)
+const AVATARS_DIR = path.join(UPLOADS_DIR, "avatars"); // username-based avatars
+const DB_PATH = path.join(__dirname, "data.sqlite");
 
-// Ensure uploads directory exists
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+ensureDir(UPLOADS_DIR);
+ensureDir(FACES_DIR);
+ensureDir(AVATARS_DIR);
 
-// Load faces mapping (character -> filename)
-function loadFacesMap() {
-  try {
-    if (!fs.existsSync(FACES_JSON_PATH)) return {};
-    const raw = fs.readFileSync(FACES_JSON_PATH, "utf8");
-    return JSON.parse(raw || "{}");
-  } catch (e) {
-    return {};
-  }
-}
-
-function saveFacesMap(map) {
-  fs.writeFileSync(FACES_JSON_PATH, JSON.stringify(map, null, 2), "utf8");
-}
-
-// Multer: store file in /uploads with safe name
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
-  filename: (req, file, cb) => {
-    const ch = String(req.body.character || "").trim();
-    const ext = path.extname(file.originalname || "").toLowerCase() || ".bin";
-    const safeChar = ch.replace(/[^a-z0-9_-]/gi, "_"); // safety
-    cb(null, `${safeChar}${ext}`);
-  }
+// ---------- SQLite ----------
+const db = new sqlite3.Database(DB_PATH);
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS leaderboard (
+      username TEXT PRIMARY KEY,
+      best INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL
+    )
+  `);
 });
 
-function fileFilter(req, file, cb) {
-  const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-  if (allowed.includes(file.mimetype)) cb(null, true);
-  else cb(new Error("Only PNG, JPG, or WEBP images are allowed."));
+function dbGet(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row)));
+  });
 }
 
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
-});
+function dbAll(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+}
 
-// Serve static files
-app.use(express.static(path.join(__dirname, "public")));
+function dbRun(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve(this);
+    });
+  });
+}
 
-// Serve uploaded faces
-app.use("/uploads", express.static(UPLOADS_DIR, { fallthrough: false }));
+// ---------- Static ----------
+app.use(express.static(PUBLIC_DIR));
+app.use("/faces", express.static(FACES_DIR));
+app.use("/avatars", express.static(AVATARS_DIR));
 
-// Health check route
+// ---------- Health ----------
 app.get("/healthz", (req, res) => {
   res.json({
     ok: true,
@@ -70,66 +79,142 @@ app.get("/healthz", (req, res) => {
   });
 });
 
-// List characters + currently uploaded faces (if any)
+// ---------- Existing (kept): Characters endpoints ----------
+const CHARACTERS = ["Broxton", "Laurel", "Hendrix", "Maddox", "Phoenix", "Dad", "Mom"];
+
+function findFaceForCharacter(name) {
+  const file = path.join(FACES_DIR, `${name}.png`);
+  if (fs.existsSync(file)) return `/faces/${encodeURIComponent(name)}.png`;
+  return null;
+}
+
 app.get("/api/characters", (req, res) => {
-  const facesMap = loadFacesMap();
-  const result = CHARACTERS.map((name) => {
-    const filename = facesMap[name] || null;
-    return {
-      name,
-      faceUrl: filename ? `/uploads/${encodeURIComponent(filename)}` : null
-    };
-  });
-  res.json({ characters: result });
+  const characters = CHARACTERS.map((name) => ({
+    name,
+    faceUrl: findFaceForCharacter(name)
+  }));
+  res.json({ ok: true, characters });
 });
 
-// Upload a face image for a character
-app.post("/api/upload-face", upload.single("face"), (req, res) => {
-  const character = String(req.body.character || "").trim();
+const characterStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, FACES_DIR),
+  filename: (req, file, cb) => {
+    const character = String(req.body.character || "").trim();
+    if (!CHARACTERS.includes(character)) return cb(new Error("Invalid character"));
+    cb(null, `${character}.png`);
+  }
+});
+const uploadCharacterFace = multer({
+  storage: characterStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
-  if (!CHARACTERS.includes(character)) {
-    // If file was saved but character invalid, clean up
-    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-      try { fs.unlinkSync(req.file.path); } catch (_) {}
+app.post("/api/upload-face", uploadCharacterFace.single("face"), (req, res) => {
+  try {
+    const character = String(req.body.character || "").trim();
+    if (!CHARACTERS.includes(character)) {
+      return res.status(400).json({ ok: false, error: "Invalid character" });
     }
-    return res.status(400).json({ ok: false, error: "Invalid character." });
+    return res.json({ ok: true, faceUrl: `/faces/${encodeURIComponent(character)}.png` });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: "Upload failed" });
   }
+});
 
-  if (!req.file) {
-    return res.status(400).json({ ok: false, error: "No file uploaded." });
+// ---------- Username avatar endpoints ----------
+app.get("/api/avatar", (req, res) => {
+  const username = safeUsername(req.query.username);
+  const filePath = path.join(AVATARS_DIR, `${username}.png`);
+  if (fs.existsSync(filePath)) {
+    return res.json({ ok: true, avatarUrl: `/avatars/${encodeURIComponent(username)}.png` });
   }
+  return res.json({ ok: true, avatarUrl: null });
+});
 
-  // If this character had an old file, remove it (unless same name)
-  const facesMap = loadFacesMap();
-  const oldFilename = facesMap[character];
-  const newFilename = req.file.filename;
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, AVATARS_DIR),
+  filename: (req, file, cb) => {
+    const username = safeUsername(req.body.username);
+    cb(null, `${username}.png`);
+  }
+});
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
-  if (oldFilename && oldFilename !== newFilename) {
-    const oldPath = path.join(UPLOADS_DIR, oldFilename);
-    if (fs.existsSync(oldPath)) {
-      try { fs.unlinkSync(oldPath); } catch (_) {}
+app.post("/api/upload-avatar", uploadAvatar.single("avatar"), (req, res) => {
+  try {
+    const username = safeUsername(req.body.username);
+    if (!req.file) {
+      return res.status(400).json({ ok: false, error: "Missing avatar file" });
     }
+    return res.json({ ok: true, avatarUrl: `/avatars/${encodeURIComponent(username)}.png` });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: "Avatar upload failed" });
   }
-
-  facesMap[character] = newFilename;
-  saveFacesMap(facesMap);
-
-  res.json({
-    ok: true,
-    character,
-    faceUrl: `/uploads/${encodeURIComponent(newFilename)}`
-  });
 });
 
-// Simple error handler for upload errors
-app.use((err, req, res, next) => {
-  if (err) {
-    return res.status(400).json({ ok: false, error: err.message || "Request error" });
+// ---------- NEW: Leaderboard endpoints (best score per username) ----------
+
+// Get top leaderboard
+app.get("/api/leaderboard", async (req, res) => {
+  try {
+    const limitRaw = Number(req.query.limit);
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(50, limitRaw)) : 20;
+
+    const rows = await dbAll(
+      `SELECT username, best, updated_at
+       FROM leaderboard
+       ORDER BY best DESC, updated_at ASC
+       LIMIT ?`,
+      [limit]
+    );
+
+    res.json({ ok: true, rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: "Failed to load leaderboard" });
   }
-  next();
 });
 
+// Save score (upsert; keep max)
+app.post("/api/score", async (req, res) => {
+  try {
+    const username = safeUsername(req.body.username);
+    const scoreNum = Number(req.body.score);
+
+    if (!username) return res.status(400).json({ ok: false, error: "Missing username" });
+    if (!Number.isFinite(scoreNum) || scoreNum < 0) {
+      return res.status(400).json({ ok: false, error: "Invalid score" });
+    }
+
+    const now = new Date().toISOString();
+    const existing = await dbGet(`SELECT best FROM leaderboard WHERE username = ?`, [username]);
+    const existingBest = existing ? Number(existing.best) : 0;
+    const newBest = Math.max(existingBest, Math.floor(scoreNum));
+
+    if (existing) {
+      await dbRun(`UPDATE leaderboard SET best = ?, updated_at = ? WHERE username = ?`, [
+        newBest,
+        now,
+        username
+      ]);
+    } else {
+      await dbRun(`INSERT INTO leaderboard (username, best, updated_at) VALUES (?, ?, ?)`, [
+        username,
+        newBest,
+        now
+      ]);
+    }
+
+    res.json({ ok: true, username, best: newBest });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: "Failed to save score" });
+  }
+});
+
+// ---------- Start ----------
 app.listen(PORT, () => {
-  console.log("Server running at http://localhost:3000");
-  console.log("Health check at http://localhost:3000/healthz");
+  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Health check at http://localhost:${PORT}/healthz`);
 });

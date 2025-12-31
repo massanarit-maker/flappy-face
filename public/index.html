@@ -13,159 +13,130 @@
       font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
-      padding: 16px;
+      padding: 14px;
     }
     .wrap { width: 100%; max-width: 980px; }
-    .topbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    h1 { margin: 0; font-size: 28px; letter-spacing: 0.3px; }
-    .sub { opacity: 0.85; font-size: 14px; margin-top: 4px; }
+    .topbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    h1 { margin:0; font-size:28px; }
+    .sub { opacity:0.85; font-size:14px; margin-top:4px; }
 
     .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: #111a2e;
-      border: 1px solid #22304f;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-weight: 600;
-      font-size: 14px;
-      flex-wrap: wrap;
+      display:inline-flex; flex-wrap:wrap; gap:10px; align-items:center;
+      background:#111a2e; border:1px solid #22304f; border-radius:999px;
+      padding:8px 12px; font-weight:600; font-size:14px;
     }
 
-    .panel {
-      background: #111a2e;
-      border: 1px solid #22304f;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .panel { background:#111a2e; border:1px solid #22304f; border-radius:12px; padding:12px; margin-bottom:12px; }
+    .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content: space-between; }
 
     .btn {
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      border-radius: 10px;
-      border: 1px solid #22304f;
-      background: #16233f;
-      color: #e6edf3;
-      cursor: pointer;
+      padding:10px 14px; font-size:14px; font-weight:700;
+      border-radius:10px; border:1px solid #22304f;
+      background:#16233f; color:#e6edf3; cursor:pointer;
     }
-    .btn:hover { filter: brightness(1.1); }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 220px;
-    }
-    label { font-size: 12px; opacity: 0.85; }
-    input[type="text"], select, input[type="file"] {
-      background: #0b1220;
-      color: #e6edf3;
-      border: 1px solid #22304f;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 14px;
-    }
+    .btn:hover { filter:brightness(1.1); }
+    .btn:disabled { opacity:0.55; cursor:not-allowed; }
 
     #status {
-      margin-top: 10px;
-      padding: 10px 12px;
-      background: #0b1220;
-      border-radius: 10px;
-      border: 1px solid #22304f;
-      min-height: 42px;
-      display: flex;
-      align-items: center;
+      margin-top:10px; padding:10px 12px; background:#0b1220;
+      border-radius:10px; border:1px solid #22304f; min-height:42px;
+      display:flex; align-items:center;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-      overflow-x: auto;
-      white-space: nowrap;
+      font-size:12px; overflow-x:auto; white-space:nowrap;
     }
 
-    .gameShell {
-      background: #0b1220;
-      border: 1px solid #22304f;
-      border-radius: 12px;
-      padding: 12px;
-    }
+    .gameShell { background:#0b1220; border:1px solid #22304f; border-radius:12px; padding:12px; }
     canvas {
-      width: 100%;
-      height: auto;
-      display: block;
+      width:100%; height:auto; display:block;
       background: linear-gradient(#0e1a33, #08101f);
-      border-radius: 10px;
-      border: 1px solid #22304f;
+      border-radius:10px; border:1px solid #22304f;
       touch-action: manipulation;
     }
-
-    .help { margin-top: 10px; opacity: 0.85; font-size: 14px; line-height: 1.4; }
+    .help { margin-top:10px; opacity:0.85; font-size:14px; line-height:1.4; }
     .kbd {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      padding: 2px 6px;
-      border: 1px solid #22304f;
-      border-radius: 6px;
-      background: #0b1220;
+      padding:2px 6px; border:1px solid #22304f; border-radius:6px; background:#0b1220;
     }
 
-    /* Start overlay */
+    /* Leaderboard */
+    .lbTitle { font-size:16px; font-weight:800; margin:0 0 10px 0; }
+    .lbBox {
+      background:#0b1220; border:1px solid #22304f; border-radius:10px; padding:10px 12px;
+    }
+    .lbRow {
+      display:flex; justify-content:space-between; gap:10px;
+      padding:8px 0; border-bottom:1px solid rgba(34,48,79,0.5);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:13px;
+    }
+    .lbRow:last-child { border-bottom:none; }
+    .lbRank { width: 34px; opacity: 0.85; }
+    .lbName { flex: 1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .lbScore { width: 70px; text-align:right; font-weight: 800; }
+    .small { font-size:12px; opacity:0.85; line-height:1.35; }
+
+    /* Overlay */
     .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.65);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-      z-index: 9999;
+      position:fixed; inset:0; background:rgba(0,0,0,0.70);
+      display:flex; justify-content:center; align-items:center; padding:12px;
+      z-index:9999;
     }
     .modal {
-      width: 100%;
-      max-width: 720px;
-      background: #111a2e;
-      border: 1px solid #22304f;
-      border-radius: 14px;
-      padding: 16px;
+      width:100%; max-width:860px;
+      background:#111a2e; border:1px solid #22304f; border-radius:14px;
+      padding:14px;
     }
-    .modal h2 { margin: 0 0 10px 0; font-size: 20px; }
+    .modal h2 { margin:0 0 8px 0; font-size:20px; }
+    .error { color:#ff7b72; font-weight:800; }
+
     .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      display:grid; grid-template-columns: 1.4fr 0.6fr; gap:12px; align-items:start;
     }
-    @media (max-width: 720px) {
+    @media (max-width: 820px) {
       .grid { grid-template-columns: 1fr; }
     }
-    .previewWrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      border-radius: 12px;
-      border: 1px solid #22304f;
-      background: #0b1220;
-      min-height: 64px;
+
+    .field { display:flex; flex-direction:column; gap:6px; }
+    label { font-size:12px; opacity:0.85; }
+    input[type="text"] {
+      background:#0b1220; color:#e6edf3; border:1px solid #22304f;
+      border-radius:10px; padding:10px 12px; font-size:14px;
     }
-    .preview {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      border: 1px solid #22304f;
-      object-fit: cover;
-      background: #0b1220;
+
+    .photoWrap {
+      position:relative;
+      border-radius:12px;
+      border:1px solid #22304f;
+      overflow:hidden;
+      background:#0b1220;
     }
-    .small { font-size: 12px; opacity: 0.85; line-height: 1.3; }
-    .error { color: #ff7b72; font-weight: 700; }
+    .photoWrap img {
+      width:100%;
+      height:auto;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .photoWrap canvas {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      border:none;
+      border-radius:0;
+      background:transparent;
+      touch-action: none;
+    }
+
+    .previewBox {
+      display:flex; align-items:center; gap:10px;
+      padding:10px; border-radius:12px; border:1px solid #22304f;
+      background:#0b1220;
+    }
+    .previewImg {
+      width:56px; height:56px; border-radius:50%;
+      border:1px solid #22304f; object-fit:cover; background:#0b1220;
+    }
   </style>
 </head>
 <body>
@@ -173,12 +144,10 @@
     <div class="topbar">
       <div>
         <h1>Flappy Face</h1>
-        <div class="sub">Step 3: Username + character select + face upload. (Leaderboard later)</div>
+        <div class="sub">Family contest mode. Leaderboard is global and saved for everyone.</div>
       </div>
       <div class="pill">
         <span>User:</span> <span id="who">Not set</span>
-        <span style="opacity:0.6">|</span>
-        <span>Character:</span> <span id="charLabel">Not set</span>
         <span style="opacity:0.6">|</span>
         <span>Score:</span> <span id="score">0</span>
         <span style="opacity:0.6">|</span>
@@ -190,9 +159,12 @@
 
     <div class="panel">
       <div class="row">
-        <button id="check" class="btn" type="button">Check /healthz</button>
-        <button id="restart" class="btn" type="button" disabled>Try Again</button>
-        <button id="changePlayer" class="btn" type="button">Change Player</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="check" class="btn" type="button">Check /healthz</button>
+          <button id="restart" class="btn" type="button" disabled>Try Again</button>
+          <button id="changePlayer" class="btn" type="button">Change Player</button>
+        </div>
+        <button id="refreshLB" class="btn" type="button">Refresh Leaderboard</button>
       </div>
       <div id="status">Not checked yet</div>
     </div>
@@ -200,47 +172,57 @@
     <div class="gameShell">
       <canvas id="game" width="420" height="640" aria-label="Flappy game canvas"></canvas>
       <div class="help">
-        Controls: <span class="kbd">Tap</span> or <span class="kbd">Click</span> (or <span class="kbd">Space</span> on desktop) to flap.
-        Avoid the pipes. If you crash, press <span class="kbd">Try Again</span>.
+        Controls: <span class="kbd">Tap</span> / <span class="kbd">Click</span> to flap. If you crash, press <span class="kbd">Try Again</span>.
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:12px;">
+      <div class="lbTitle">Leaderboard (best score per username)</div>
+      <div class="lbBox" id="lbBox">
+        <div class="small" id="lbMsg">Loading…</div>
+      </div>
+      <div class="small" style="margin-top:10px;">
+        Notes: This is a simple family leaderboard (no passwords). We can add anti-cheat later if you want, but this keeps it stable.
       </div>
     </div>
   </div>
 
+  <!-- Player Select Overlay -->
   <div class="overlay" id="overlay">
     <div class="modal">
-      <h2>Choose Player</h2>
+      <h2>Pick Your Face, Enter Your Username</h2>
+      <div class="small" style="margin-bottom:10px;">
+        Drag a box over your face in the family photo. On iPhone, press and drag with your finger.
+        Then type your username and press Start.
+      </div>
+
       <div class="grid">
+        <div>
+          <div class="photoWrap">
+            <img id="familyPhoto" src="/family.jpg" alt="Family Photo" />
+            <canvas id="selector"></canvas>
+          </div>
+          <div class="small" style="margin-top:8px;">
+            Tip: If you already played before with the same username, your saved face will load automatically.
+          </div>
+        </div>
+
         <div class="field">
           <label for="username">Username (required)</label>
           <input id="username" type="text" placeholder="Type a username" autocomplete="off" />
-          <div class="small">No passwords. Just a name so scores can be saved later.</div>
-        </div>
 
-        <div class="field">
-          <label for="character">Character</label>
-          <select id="character"></select>
-          <div class="small">Each character can have one face image saved on the server.</div>
-        </div>
+          <div class="previewBox" style="margin-top:6px;">
+            <img id="preview" class="previewImg" alt="Avatar preview" />
+            <div>
+              <div class="small" id="previewText">No saved face yet. Select your face on the photo.</div>
+              <div class="small" id="startError" style="margin-top:6px;"></div>
+            </div>
+          </div>
 
-        <div class="field">
-          <label for="faceFile">Upload face image (PNG/JPG/WEBP)</label>
-          <input id="faceFile" type="file" accept="image/png,image/jpeg,image/webp" />
-          <button id="uploadBtn" class="btn" type="button">Upload Face</button>
-          <div class="small" id="uploadMsg">Upload is optional, but recommended.</div>
-        </div>
-
-        <div class="field">
-          <label>Current face for selected character</label>
-          <div class="previewWrap">
-            <img id="preview" class="preview" alt="Face preview" />
-            <div class="small" id="previewText">No face uploaded yet.</div>
+          <div class="row" style="margin-top:10px; justify-content:flex-start;">
+            <button id="startBtn" class="btn" type="button">Start Game</button>
           </div>
         </div>
-      </div>
-
-      <div class="row" style="margin-top:12px; justify-content: space-between;">
-        <div class="small" id="startError"></div>
-        <button id="startBtn" class="btn" type="button">Start Game</button>
       </div>
     </div>
   </div>
@@ -249,7 +231,6 @@
     const dbgEl = document.getElementById("dbg");
     const statusEl = document.getElementById("status");
 
-    // --- Health check ---
     document.getElementById("check").onclick = async () => {
       statusEl.textContent = "Checking...";
       try {
@@ -261,128 +242,36 @@
       }
     };
 
-    // --- Player/Character UI ---
+    // Top UI
     const whoEl = document.getElementById("who");
-    const charLabelEl = document.getElementById("charLabel");
-
-    const overlay = document.getElementById("overlay");
-    const usernameInput = document.getElementById("username");
-    const characterSelect = document.getElementById("character");
-    const faceFileInput = document.getElementById("faceFile");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const uploadMsg = document.getElementById("uploadMsg");
-    const previewImg = document.getElementById("preview");
-    const previewText = document.getElementById("previewText");
-    const startBtn = document.getElementById("startBtn");
-    const startError = document.getElementById("startError");
-    const changePlayerBtn = document.getElementById("changePlayer");
-
-    let selectedUsername = "";
-    let selectedCharacter = "";
-    let selectedFaceUrl = null;
-    let characterFaceMap = {};
-
-    async function loadCharacters() {
-      const res = await fetch("/api/characters", { cache: "no-store" });
-      const data = await res.json();
-
-      characterSelect.innerHTML = "";
-      characterFaceMap = {};
-      for (const c of data.characters) {
-        characterFaceMap[c.name] = c.faceUrl;
-        const opt = document.createElement("option");
-        opt.value = c.name;
-        opt.textContent = c.name;
-        characterSelect.appendChild(opt);
-      }
-
-      if (!selectedCharacter) selectedCharacter = data.characters[0]?.name || "";
-      characterSelect.value = selectedCharacter;
-      updatePreviewForSelected();
-    }
-
-    function updatePreviewForSelected() {
-      const ch = characterSelect.value;
-      const url = characterFaceMap[ch] || null;
-
-      selectedCharacter = ch;
-      selectedFaceUrl = url;
-
-      if (url) {
-        previewImg.src = url + `?t=${Date.now()}`;
-        previewText.textContent = "Face found on server.";
-      } else {
-        previewImg.removeAttribute("src");
-        previewText.textContent = "No face uploaded yet.";
-      }
-
-      uploadMsg.textContent = "Upload is optional, but recommended.";
-      uploadMsg.classList.remove("error");
-      startError.textContent = "";
-      startError.classList.remove("error");
-    }
-
-    characterSelect.addEventListener("change", updatePreviewForSelected);
-
-    uploadBtn.addEventListener("click", async () => {
-      const ch = characterSelect.value;
-      const file = faceFileInput.files && faceFileInput.files[0];
-
-      if (!file) {
-        uploadMsg.textContent = "Please choose a file first.";
-        uploadMsg.classList.add("error");
-        return;
-      }
-
-      uploadBtn.disabled = true;
-      uploadMsg.textContent = "Uploading...";
-      uploadMsg.classList.remove("error");
-
-      try {
-        const form = new FormData();
-        form.append("character", ch);
-        form.append("face", file);
-
-        const res = await fetch("/api/upload-face", { method: "POST", body: form });
-        const data = await res.json();
-
-        if (!res.ok || !data.ok) throw new Error(data.error || "Upload failed");
-
-        characterFaceMap[ch] = data.faceUrl;
-        selectedFaceUrl = data.faceUrl;
-
-        previewImg.src = data.faceUrl + `?t=${Date.now()}`;
-        previewText.textContent = "Uploaded successfully.";
-        uploadMsg.textContent = "Upload complete.";
-        dbgEl.textContent = "uploaded";
-      } catch (e) {
-        uploadMsg.textContent = "Upload failed: " + (e.message || "Unknown error");
-        uploadMsg.classList.add("error");
-        dbgEl.textContent = "upload error";
-      } finally {
-        uploadBtn.disabled = false;
-        faceFileInput.value = "";
-      }
-    });
-
-    changePlayerBtn.addEventListener("click", async () => {
-      overlay.style.display = "flex";
-      startError.textContent = "";
-      startError.classList.remove("error");
-      await loadCharacters();
-      usernameInput.focus();
-      setGameEnabled(false);
-      dbgEl.textContent = "overlay open";
-    });
-
-    // --- Game ---
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-
     const scoreEl = document.getElementById("score");
     const bestEl = document.getElementById("best");
     const restartBtn = document.getElementById("restart");
+    const changePlayerBtn = document.getElementById("changePlayer");
 
+    // Leaderboard UI
+    const lbBox = document.getElementById("lbBox");
+    const lbMsg = document.getElementById("lbMsg");
+    const refreshLBBtn = document.getElementById("refreshLB");
+
+    // Overlay UI
+    const overlay = document.getElementById("overlay");
+    const usernameInput = document.getElementById("username");
+    const startBtn = document.getElementById("startBtn");
+    const startError = document.getElementById("startError");
+    const previewImg = document.getElementById("preview");
+    const previewText = document.getElementById("previewText");
+
+    // Photo selector
+    const familyImg = document.getElementById("familyPhoto");
+    const selCanvas = document.getElementById("selector");
+    const selCtx = selCanvas.getContext("2d");
+
+    // Game canvas
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    // Game constants
     const G = 1800;
     const FLAP_VY = -520;
     const PIPE_SPEED = 220;
@@ -391,18 +280,24 @@
     const PIPE_SPAWN_SEC = 1.25;
     const FLOOR_H = 80;
 
-    // IMPORTANT: initialize everything so nothing is undefined
+    // State
+    let selectedUsername = "";
+    let selectedFaceUrl = null;
+
     let bird = { x: 120, y: canvas.height * 0.45, r: 18, vy: 0 };
-    let pipes = [];                // <-- always an array
+    let pipes = [];
     let score = 0;
     let best = 0;
     let running = false;
     let gameOver = false;
-
+    let gameOverPrev = false;
     let lastTs = 0;
     let spawnT = 0;
 
-    // Face image
+    // Save score once per run
+    let scoreSavedForThisRun = false;
+
+    // Face image for bird
     let faceImg = new Image();
     let faceLoaded = false;
     let faceSrcActive = "";
@@ -411,7 +306,6 @@
       faceLoaded = false;
       faceSrcActive = url || "";
       if (!url) return;
-
       faceImg = new Image();
       faceImg.onload = () => { faceLoaded = true; };
       faceImg.onerror = () => { faceLoaded = false; };
@@ -426,12 +320,15 @@
       setFaceFromUrl(selectedFaceUrl);
 
       bird = { x: 120, y: canvas.height * 0.45, r: 18, vy: 0 };
-      pipes = [];          // <-- ensure array every reset
+      pipes = [];
       score = 0;
       running = true;
       gameOver = false;
+      gameOverPrev = false;
       spawnT = 0;
       lastTs = 0;
+
+      scoreSavedForThisRun = false;
 
       scoreEl.textContent = "0";
       dbgEl.textContent = "running";
@@ -464,24 +361,38 @@
       return (dx * dx + dy * dy) <= (cr * cr);
     }
 
+    async function saveScoreOnce() {
+      if (!selectedUsername) return;
+      if (scoreSavedForThisRun) return;
+      scoreSavedForThisRun = true;
+
+      try {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: selectedUsername, score })
+        });
+        const data = await res.json();
+        if (data && data.ok) {
+          dbgEl.textContent = "score saved";
+          await loadLeaderboard();
+        } else {
+          dbgEl.textContent = "score save failed";
+        }
+      } catch (e) {
+        dbgEl.textContent = "score save error";
+      }
+    }
+
     function update(dt) {
       bird.vy += G * dt;
       bird.y += bird.vy * dt;
 
-      if (bird.y - bird.r < 0) {
-        bird.y = bird.r;
-        bird.vy = 0;
-      }
-      if (bird.y + bird.r > canvas.height - FLOOR_H) {
-        bird.y = canvas.height - FLOOR_H - bird.r;
-        gameOver = true;
-      }
+      if (bird.y - bird.r < 0) { bird.y = bird.r; bird.vy = 0; }
+      if (bird.y + bird.r > canvas.height - FLOOR_H) { bird.y = canvas.height - FLOOR_H - bird.r; gameOver = true; }
 
       spawnT += dt;
-      if (spawnT >= PIPE_SPAWN_SEC) {
-        spawnT = 0;
-        addPipe();
-      }
+      if (spawnT >= PIPE_SPAWN_SEC) { spawnT = 0; addPipe(); }
 
       for (const p of pipes) {
         p.x -= PIPE_SPEED * dt;
@@ -490,10 +401,7 @@
           p.passed = true;
           score += 1;
           scoreEl.textContent = String(score);
-          if (score > best) {
-            best = score;
-            bestEl.textContent = String(best);
-          }
+          if (score > best) { best = score; bestEl.textContent = String(best); }
         }
       }
 
@@ -521,7 +429,6 @@
       } else {
         ctx.fillStyle = "#0b1220";
         ctx.fillRect(bird.x - bird.r, bird.y - bird.r, bird.r * 2, bird.r * 2);
-
         ctx.beginPath();
         ctx.fillStyle = "#e6edf3";
         ctx.arc(bird.x + 6, bird.y - 4, 3, 0, Math.PI * 2);
@@ -544,7 +451,6 @@
       for (let i = 0; i < 8; i++) ctx.fillRect(i * 70, 0, 35, canvas.height);
       ctx.globalAlpha = 1;
 
-      // GUARD: if pipes got corrupted, force it back to an array (prevents crash)
       if (!Array.isArray(pipes)) pipes = [];
 
       for (const p of pipes) {
@@ -567,27 +473,22 @@
       if (!selectedUsername) {
         ctx.fillStyle = "rgba(0,0,0,0.35)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#e6edf3";
         ctx.font = "bold 18px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("Choose Player to Start", canvas.width / 2, canvas.height / 2);
+        ctx.fillText("Pick your face + username to start", canvas.width / 2, canvas.height / 2);
       } else if (gameOver) {
         ctx.fillStyle = "rgba(0,0,0,0.55)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#e6edf3";
         ctx.font = "bold 36px Arial";
         ctx.textAlign = "center";
         ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 30);
-
         ctx.font = "16px Arial";
         ctx.fillText("Press Try Again", canvas.width / 2, canvas.height / 2 + 10);
-        dbgEl.textContent = "game over";
       } else if (score === 0 && pipes.length === 0) {
         ctx.fillStyle = "rgba(0,0,0,0.25)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#e6edf3";
         ctx.font = "bold 20px Arial";
         ctx.textAlign = "center";
@@ -601,17 +502,23 @@
       lastTs = ts;
 
       if (selectedUsername && running && !gameOver) update(dt);
-      draw();
 
+      // Detect transition into game over (one time)
+      if (selectedUsername) {
+        if (!gameOverPrev && gameOver) {
+          dbgEl.textContent = "game over";
+          saveScoreOnce();
+        }
+        gameOverPrev = gameOver;
+      }
+
+      draw();
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
 
     window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        flap();
-      }
+      if (e.code === "Space") { e.preventDefault(); flap(); }
     });
     canvas.addEventListener("pointerdown", () => flap());
 
@@ -621,7 +528,203 @@
       setTimeout(() => flap(), 50);
     });
 
-    startBtn.addEventListener("click", () => {
+    // ---------- Face selection UI ----------
+    let sel = null; // {x0,y0,x1,y1} in DISPLAY pixels
+    let dragging = false;
+
+    function resizeSelectorCanvas() {
+      const rect = familyImg.getBoundingClientRect();
+      selCanvas.width = Math.max(1, Math.floor(rect.width));
+      selCanvas.height = Math.max(1, Math.floor(rect.height));
+      drawSelection();
+    }
+
+    function drawSelection() {
+      selCtx.clearRect(0, 0, selCanvas.width, selCanvas.height);
+      if (!sel) return;
+
+      const x = Math.min(sel.x0, sel.x1);
+      const y = Math.min(sel.y0, sel.y1);
+      const w = Math.abs(sel.x1 - sel.x0);
+      const h = Math.abs(sel.y1 - sel.y0);
+
+      selCtx.fillStyle = "rgba(0,0,0,0.25)";
+      selCtx.fillRect(0, 0, selCanvas.width, selCanvas.height);
+
+      selCtx.clearRect(x, y, w, h);
+
+      selCtx.strokeStyle = "rgba(255,255,255,0.95)";
+      selCtx.lineWidth = 2;
+      selCtx.strokeRect(x + 0.5, y + 0.5, w, h);
+    }
+
+    function pointerPos(ev) {
+      const r = selCanvas.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(r.width, ev.clientX - r.left)),
+        y: Math.max(0, Math.min(r.height, ev.clientY - r.top))
+      };
+    }
+
+    selCanvas.addEventListener("pointerdown", (ev) => {
+      selCanvas.setPointerCapture(ev.pointerId);
+      dragging = true;
+      const p = pointerPos(ev);
+      sel = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+      drawSelection();
+      dbgEl.textContent = "selecting";
+    });
+
+    selCanvas.addEventListener("pointermove", (ev) => {
+      if (!dragging || !sel) return;
+      const p = pointerPos(ev);
+      sel.x1 = p.x;
+      sel.y1 = p.y;
+      drawSelection();
+    });
+
+    selCanvas.addEventListener("pointerup", () => {
+      dragging = false;
+      if (!sel) return;
+      drawSelection();
+      dbgEl.textContent = "selected";
+    });
+
+    window.addEventListener("resize", () => resizeSelectorCanvas());
+    familyImg.addEventListener("load", () => { resizeSelectorCanvas(); dbgEl.textContent = "photo loaded"; });
+
+    // ---------- Username avatar loading / saving ----------
+    async function loadExistingAvatar(username) {
+      try {
+        const res = await fetch(`/api/avatar?username=${encodeURIComponent(username)}`, { cache: "no-store" });
+        const data = await res.json();
+        if (data.ok && data.avatarUrl) return data.avatarUrl;
+      } catch (e) {}
+      return null;
+    }
+
+    let usernameTimer = null;
+    usernameInput.addEventListener("input", () => {
+      clearTimeout(usernameTimer);
+      usernameTimer = setTimeout(async () => {
+        const name = (usernameInput.value || "").trim();
+        if (!name) {
+          previewImg.removeAttribute("src");
+          previewText.textContent = "No saved face yet. Select your face on the photo.";
+          return;
+        }
+        const url = await loadExistingAvatar(name);
+        if (url) {
+          previewImg.src = url + `?t=${Date.now()}`;
+          previewText.textContent = "Saved face found for this username.";
+        } else {
+          previewImg.removeAttribute("src");
+          previewText.textContent = "No saved face yet. Select your face on the photo.";
+        }
+      }, 300);
+    });
+
+    function cropSelectionToBlob() {
+      if (!sel) return null;
+
+      const dispW = selCanvas.width;
+      const dispH = selCanvas.height;
+      const natW = familyImg.naturalWidth;
+      const natH = familyImg.naturalHeight;
+
+      if (!dispW || !dispH || !natW || !natH) return null;
+
+      const x = Math.min(sel.x0, sel.x1);
+      const y = Math.min(sel.y0, sel.y1);
+      const w = Math.abs(sel.x1 - sel.x0);
+      const h = Math.abs(sel.y1 - sel.y0);
+
+      if (w < 20 || h < 20) return null;
+
+      const scaleX = natW / dispW;
+      const scaleY = natH / dispH;
+
+      const sx = Math.floor(x * scaleX);
+      const sy = Math.floor(y * scaleY);
+      const sw = Math.floor(w * scaleX);
+      const sh = Math.floor(h * scaleY);
+
+      const outSize = 256;
+      const out = document.createElement("canvas");
+      out.width = outSize;
+      out.height = outSize;
+      const octx = out.getContext("2d");
+
+      octx.fillStyle = "#000";
+      octx.fillRect(0, 0, outSize, outSize);
+      octx.drawImage(familyImg, sx, sy, sw, sh, 0, 0, outSize, outSize);
+
+      return new Promise((resolve) => {
+        out.toBlob((blob) => resolve(blob), "image/png", 0.92);
+      });
+    }
+
+    async function uploadAvatar(username, blob) {
+      const form = new FormData();
+      form.append("username", username);
+      form.append("avatar", blob, "avatar.png");
+
+      const res = await fetch("/api/upload-avatar", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Upload failed");
+      return data.avatarUrl;
+    }
+
+    // ---------- Leaderboard loading ----------
+    async function loadLeaderboard() {
+      lbBox.innerHTML = `<div class="small" id="lbMsg">Loading…</div>`;
+      try {
+        const res = await fetch("/api/leaderboard?limit=20", { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok) throw new Error("bad response");
+
+        if (!data.rows || data.rows.length === 0) {
+          lbBox.innerHTML = `<div class="small">No scores yet. Play a round to create the first score.</div>`;
+          return;
+        }
+
+        const rows = data.rows
+          .map((r, i) => {
+            const rank = i + 1;
+            const name = r.username;
+            const best = r.best;
+            return `
+              <div class="lbRow">
+                <div class="lbRank">#${rank}</div>
+                <div class="lbName">${escapeHtml(name)}</div>
+                <div class="lbScore">${best}</div>
+              </div>
+            `;
+          })
+          .join("");
+
+        lbBox.innerHTML = rows;
+      } catch (e) {
+        lbBox.innerHTML = `<div class="small">Could not load leaderboard (server error). Try Refresh Leaderboard.</div>`;
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    refreshLBBtn.addEventListener("click", () => loadLeaderboard());
+
+    // Start game button
+    startBtn.addEventListener("click", async () => {
+      startError.textContent = "";
+      startError.classList.remove("error");
+
       const name = (usernameInput.value || "").trim();
       if (!name) {
         startError.textContent = "Username is required.";
@@ -629,34 +732,59 @@
         return;
       }
 
+      dbgEl.textContent = "starting";
+
+      let avatarUrl = await loadExistingAvatar(name);
+
+      if (!avatarUrl) {
+        const blob = await cropSelectionToBlob();
+        if (!blob) {
+          startError.textContent = "Select your face on the photo first (drag a box around it).";
+          startError.classList.add("error");
+          dbgEl.textContent = "need selection";
+          return;
+        }
+        try {
+          avatarUrl = await uploadAvatar(name, blob);
+        } catch (e) {
+          startError.textContent = "Could not save face: " + (e.message || "Upload error");
+          startError.classList.add("error");
+          dbgEl.textContent = "upload error";
+          return;
+        }
+      }
+
       selectedUsername = name;
-      selectedCharacter = characterSelect.value;
-      selectedFaceUrl = characterFaceMap[selectedCharacter] || null;
+      selectedFaceUrl = avatarUrl;
 
       whoEl.textContent = selectedUsername;
-      charLabelEl.textContent = selectedCharacter;
 
       overlay.style.display = "none";
-      startError.textContent = "";
-      startError.classList.remove("error");
-
       setGameEnabled(true);
       resetGame();
-
       setTimeout(() => flap(), 50);
+
       dbgEl.textContent = "started";
+      loadLeaderboard();
     });
 
-    (async function init() {
+    // Change player
+    changePlayerBtn.addEventListener("click", () => {
+      overlay.style.display = "flex";
+      setGameEnabled(false);
+      dbgEl.textContent = "overlay";
+    });
+
+    // init
+    (function init() {
+      best = 0;
       bestEl.textContent = "0";
       setGameEnabled(false);
       overlay.style.display = "flex";
       whoEl.textContent = "Not set";
-      charLabelEl.textContent = "Not set";
-      dbgEl.textContent = "loading";
-      await loadCharacters();
-      usernameInput.focus();
       dbgEl.textContent = "ready";
+      usernameInput.focus();
+      loadLeaderboard();
     })();
   </script>
 </body>
