@@ -1,96 +1,263 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Flappy Face</title>
-  <style>
-    html, body { margin:0; padding:0; height:100%; background:#0b1220; color:#e8eefc; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    .wrap { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:24px; box-sizing:border-box; }
-    h1 { margin:0 0 6px 0; font-size:34px; }
-    .sub { margin:0 0 18px 0; opacity:.75; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Flappy Face</title>
 
-    .modal {
-      width:min(920px, 96vw);
-      background:rgba(20,30,55,.92);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
-      padding:18px;
-      box-sizing:border-box;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    .grid { display:grid; grid-template-columns: 1.3fr .9fr; gap:14px; align-items:start; }
-    @media (max-width: 900px){ .grid { grid-template-columns:1fr; } }
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0b1220;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  height: 100%;
+  overflow: hidden;
+}
 
-    .photoWrap { position:relative; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:#0a1020; }
-    .photoWrap img { display:block; width:100%; height:auto; }
-    .small { font-size:13px; opacity:.8; line-height:1.35; margin-top:10px; }
-    .field label { display:block; font-size:13px; opacity:.85; margin:8px 0 6px; }
-    .field input { width:100%; box-sizing:border-box; padding:12px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0b1220; color:#e8eefc; outline:none; }
-    .err { margin-top:8px; font-size:13px; color:#ffb3b3; display:none; }
-    .btn { margin-top:12px; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background:#15264a; color:#fff; cursor:pointer; font-weight:600; width:100%; }
-    .btn:active { transform: translateY(1px); }
-  </style>
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+canvas {
+  display: block;
+  margin: 0 auto;
+  background: linear-gradient(#101c36, #070c18);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5,10,20,.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.modal {
+  background: #111b33;
+  border-radius: 16px;
+  padding: 20px;
+  width: min(92vw, 520px);
+  box-shadow: 0 0 40px rgba(0,0,0,.6);
+}
+
+h2 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+}
+
+.small {
+  font-size: 12px;
+  opacity: .85;
+}
+
+.photoWrap {
+  position: relative;
+  margin-top: 10px;
+}
+
+.photoWrap img {
+  width: 100%;
+  border-radius: 10px;
+  display: block;
+}
+
+.photoWrap canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.field {
+  margin-top: 10px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+}
+
+button {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: none;
+  background: #4f8cff;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover { opacity: .9; }
+
+#leaderboard {
+  margin-top: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.hidden { display: none; }
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <h1>Flappy Face</h1>
-    <p class="sub">Pick your face from the family photo, enter a username, then play.</p>
+<div id="game">
+  <canvas id="gameCanvas"></canvas>
 
+  <!-- PLAYER SELECT -->
+  <div class="overlay" id="overlay">
     <div class="modal">
-      <div class="grid">
-        <div>
-          <div class="photoWrap">
-            <!-- IMPORTANT:
-                 GitHub Pages is serving from /docs as the site root.
-                 Your family photo MUST be located at: docs/family.jpg
-                 Using ./family.jpg keeps it relative and reliable. -->
-            <img id="familyPhoto" src="./family.jpg" alt="Family Photo" />
-          </div>
-          <div class="small">
-            If the photo shows a broken icon, it means GitHub Pages can’t find <b>docs/family.jpg</b>
-            or the filename’s capitalization doesn’t match exactly.
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="username">Username (required)</label>
-          <input id="username" type="text" placeholder="Type a username" autocomplete="off" />
-          <button class="btn" id="startBtn">Start Game</button>
-          <div class="err" id="startError"></div>
-
-          <div class="small" style="margin-top:12px;">
-            This page is currently being hosted by GitHub Pages (static only). If you see any <code>/api/...</code> 404 errors in console,
-            that’s because GitHub Pages can’t run your Node/Express server.
-          </div>
-        </div>
+      <h2>Pick Your Face, Enter Your Username</h2>
+      <div class="small">
+        Drag a box over your face in the family photo. On iPhone, press and drag.
       </div>
+
+      <div class="photoWrap">
+        <img src="./family.jpg" alt="Family Photo">
+        <canvas id="selector"></canvas>
+      </div>
+
+      <div class="field">
+        <input id="username" placeholder="Type a username" autocomplete="off"/>
+      </div>
+
+      <button id="startBtn">Start Game</button>
+      <div class="small" id="startError"></div>
     </div>
   </div>
 
-  <script>
-    // Tiny guard so you can SEE when the image fails to load.
-    const img = document.getElementById('familyPhoto');
-    img.addEventListener('error', () => {
-      img.alt = "Family Photo (NOT FOUND)";
-      const err = document.getElementById('startError');
-      err.style.display = 'block';
-      err.textContent =
-        "Photo did not load. Fix: make sure the file is named EXACTLY 'family.jpg' and is inside the 'docs' folder, then commit + push.";
-    });
+  <!-- GAME OVER -->
+  <div class="overlay hidden" id="gameOver">
+    <div class="modal">
+      <h2>Game Over</h2>
+      <div id="rankText" class="small"></div>
 
-    document.getElementById('startBtn').addEventListener('click', () => {
-      const u = document.getElementById('username').value.trim();
-      const err = document.getElementById('startError');
-      if (!u) {
-        err.style.display = 'block';
-        err.textContent = "Please enter a username first.";
-        return;
-      }
-      err.style.display = 'none';
-      alert("Next step is wiring this into the game. For now, photo + username check is working.");
-    });
-  </script>
+      <h3>Top 10 Leaderboard</h3>
+      <div id="leaderboard"></div>
+
+      <button onclick="location.reload()">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- LEADERBOARD ---------- */
+function getScores() {
+  return JSON.parse(localStorage.getItem("scores") || "{}");
+}
+function saveScore(user, score) {
+  const scores = getScores();
+  scores[user] = Math.max(scores[user] || 0, score);
+  localStorage.setItem("scores", JSON.stringify(scores));
+}
+function topScores() {
+  return Object.entries(getScores())
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,10);
+}
+
+/* ---------- FACE SELECT ---------- */
+const img = document.querySelector(".photoWrap img");
+const sel = document.getElementById("selector");
+const ctxSel = sel.getContext("2d");
+let box = null, dragging = false, sx, sy;
+
+function resizeSelector() {
+  sel.width = img.clientWidth;
+  sel.height = img.clientHeight;
+}
+window.addEventListener("resize", resizeSelector);
+img.onload = resizeSelector;
+
+sel.addEventListener("pointerdown", e => {
+  dragging = true;
+  sx = e.offsetX;
+  sy = e.offsetY;
+});
+sel.addEventListener("pointermove", e => {
+  if(!dragging) return;
+  box = {x:sx,y:sy,w:e.offsetX-sx,h:e.offsetY-sy};
+  ctxSel.clearRect(0,0,sel.width,sel.height);
+  ctxSel.strokeStyle="#4f8cff";
+  ctxSel.lineWidth=2;
+  ctxSel.strokeRect(box.x,box.y,box.w,box.h);
+});
+sel.addEventListener("pointerup",()=>dragging=false);
+
+/* ---------- GAME ---------- */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+function resizeGame(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+}
+resizeGame(); window.addEventListener("resize",resizeGame);
+
+let y=canvas.height/2, v=0, score=0, running=false;
+
+document.getElementById("startBtn").onclick=()=>{
+  const user=document.getElementById("username").value.trim();
+  if(!user||!box){
+    document.getElementById("startError").textContent="Username and face required.";
+    return;
+  }
+  document.getElementById("overlay").classList.add("hidden");
+  running=true;
+  loop();
+};
+
+function loop(){
+  if(!running) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  v+=0.5; y+=v;
+  if(y<0||y>canvas.height){
+    endGame();
+    return;
+  }
+  ctx.fillStyle="#fff";
+  ctx.beginPath();
+  ctx.arc(canvas.width/4,y,18,0,Math.PI*2);
+  ctx.fill();
+  score++;
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener("pointerdown",()=>v=-8);
+
+function endGame(){
+  running=false;
+  const user=document.getElementById("username").value.trim();
+  saveScore(user,score);
+
+  const scores=Object.entries(getScores()).sort((a,b)=>b[1]-a[1]);
+  const rank=scores.findIndex(s=>s[0]===user)+1;
+
+  document.getElementById("rankText").textContent=
+    `Your rank: #${rank} of ${scores.length}`;
+
+  const lb=document.getElementById("leaderboard");
+  lb.innerHTML="";
+  topScores().forEach((s,i)=>{
+    lb.innerHTML+=`<div class="row"><span>#${i+1} ${s[0]}</span><span>${s[1]}</span></div>`;
+  });
+
+  document.getElementById("gameOver").classList.remove("hidden");
+}
+</script>
 </body>
 </html>
