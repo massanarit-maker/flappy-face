@@ -1,4 +1,3 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,10 +15,7 @@
       justify-content: center;
       padding: 16px;
     }
-    .wrap {
-      width: 100%;
-      max-width: 900px;
-    }
+    .wrap { width: 100%; max-width: 980px; }
     .topbar {
       display: flex;
       flex-wrap: wrap;
@@ -28,20 +24,9 @@
       justify-content: space-between;
       margin-bottom: 12px;
     }
-    .title {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 28px;
-      letter-spacing: 0.3px;
-    }
-    .sub {
-      opacity: 0.85;
-      font-size: 14px;
-    }
+    h1 { margin: 0; font-size: 28px; letter-spacing: 0.3px; }
+    .sub { opacity: 0.85; font-size: 14px; margin-top: 4px; }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -52,7 +37,18 @@
       padding: 8px 12px;
       font-weight: 600;
       font-size: 14px;
+      flex-wrap: wrap;
     }
+
+    .panel {
+      background: #111a2e;
+      border: 1px solid #22304f;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
     .btn {
       padding: 10px 14px;
       font-size: 14px;
@@ -64,19 +60,24 @@
       cursor: pointer;
     }
     .btn:hover { filter: brightness(1.1); }
-    .panel {
-      background: #111a2e;
-      border: 1px solid #22304f;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .row {
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .field {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 220px;
     }
+    label { font-size: 12px; opacity: 0.85; }
+    input[type="text"], select, input[type="file"] {
+      background: #0b1220;
+      color: #e6edf3;
+      border: 1px solid #22304f;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
     #status {
       margin-top: 10px;
       padding: 10px 12px;
@@ -92,7 +93,6 @@
       white-space: nowrap;
     }
 
-    /* Game */
     .gameShell {
       background: #0b1220;
       border: 1px solid #22304f;
@@ -106,14 +106,10 @@
       background: linear-gradient(#0e1a33, #08101f);
       border-radius: 10px;
       border: 1px solid #22304f;
-      touch-action: manipulation; /* helps on mobile taps */
+      touch-action: manipulation;
     }
-    .help {
-      margin-top: 10px;
-      opacity: 0.85;
-      font-size: 14px;
-      line-height: 1.4;
-    }
+
+    .help { margin-top: 10px; opacity: 0.85; font-size: 14px; line-height: 1.4; }
     .kbd {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       padding: 2px 6px;
@@ -121,26 +117,82 @@
       border-radius: 6px;
       background: #0b1220;
     }
+
+    /* Start overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 9999;
+    }
+    .modal {
+      width: 100%;
+      max-width: 720px;
+      background: #111a2e;
+      border: 1px solid #22304f;
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .modal h2 { margin: 0 0 10px 0; font-size: 20px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .previewWrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #22304f;
+      background: #0b1220;
+      min-height: 64px;
+    }
+    .preview {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid #22304f;
+      object-fit: cover;
+      background: #0b1220;
+    }
+    .small { font-size: 12px; opacity: 0.85; line-height: 1.3; }
+    .error { color: #ff7b72; font-weight: 700; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <div class="title">
+      <div>
         <h1>Flappy Face</h1>
-        <div class="sub">Step 2: Game core (local only). No character select yet.</div>
+        <div class="sub">Step 3: Username + character select + face upload. (Leaderboard later)</div>
       </div>
       <div class="pill">
+        <span>User:</span> <span id="who">Not set</span>
+        <span style="opacity:0.6">|</span>
+        <span>Character:</span> <span id="charLabel">Not set</span>
+        <span style="opacity:0.6">|</span>
         <span>Score:</span> <span id="score">0</span>
         <span style="opacity:0.6">|</span>
         <span>Best:</span> <span id="best">0</span>
+        <span style="opacity:0.6">|</span>
+        <span>Debug:</span> <span id="dbg">idle</span>
       </div>
     </div>
 
     <div class="panel">
       <div class="row">
         <button id="check" class="btn" type="button">Check /healthz</button>
-        <button id="restart" class="btn" type="button">Restart</button>
+        <button id="restart" class="btn" type="button" disabled>Try Again</button>
+        <button id="changePlayer" class="btn" type="button">Change Player</button>
       </div>
       <div id="status">Not checked yet</div>
     </div>
@@ -148,27 +200,182 @@
     <div class="gameShell">
       <canvas id="game" width="420" height="640" aria-label="Flappy game canvas"></canvas>
       <div class="help">
-        Controls: <span class="kbd">Space</span> or <span class="kbd">Click/Tap</span> to flap.
-        Avoid the pipes. If you crash, press <span class="kbd">Restart</span>.
+        Controls: <span class="kbd">Tap</span> or <span class="kbd">Click</span> (or <span class="kbd">Space</span> on desktop) to flap.
+        Avoid the pipes. If you crash, press <span class="kbd">Try Again</span>.
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>Choose Player</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="username">Username (required)</label>
+          <input id="username" type="text" placeholder="Type a username" autocomplete="off" />
+          <div class="small">No passwords. Just a name so scores can be saved later.</div>
+        </div>
+
+        <div class="field">
+          <label for="character">Character</label>
+          <select id="character"></select>
+          <div class="small">Each character can have one face image saved on the server.</div>
+        </div>
+
+        <div class="field">
+          <label for="faceFile">Upload face image (PNG/JPG/WEBP)</label>
+          <input id="faceFile" type="file" accept="image/png,image/jpeg,image/webp" />
+          <button id="uploadBtn" class="btn" type="button">Upload Face</button>
+          <div class="small" id="uploadMsg">Upload is optional, but recommended.</div>
+        </div>
+
+        <div class="field">
+          <label>Current face for selected character</label>
+          <div class="previewWrap">
+            <img id="preview" class="preview" alt="Face preview" />
+            <div class="small" id="previewText">No face uploaded yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px; justify-content: space-between;">
+        <div class="small" id="startError"></div>
+        <button id="startBtn" class="btn" type="button">Start Game</button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- Health check (keeps Step 1 functionality) ---
+    const dbgEl = document.getElementById("dbg");
+    const statusEl = document.getElementById("status");
+
+    // --- Health check ---
     document.getElementById("check").onclick = async () => {
-      const status = document.getElementById("status");
-      status.textContent = "Checking...";
+      statusEl.textContent = "Checking...";
       try {
         const res = await fetch("/healthz", { cache: "no-store" });
         const data = await res.json();
-        status.textContent = "OK: " + JSON.stringify(data);
+        statusEl.textContent = "OK: " + JSON.stringify(data);
       } catch (e) {
-        status.textContent = "ERROR: Server not responding";
+        statusEl.textContent = "ERROR: Server not responding";
       }
     };
 
-    // --- Flappy core (local-only) ---
+    // --- Player/Character UI ---
+    const whoEl = document.getElementById("who");
+    const charLabelEl = document.getElementById("charLabel");
+
+    const overlay = document.getElementById("overlay");
+    const usernameInput = document.getElementById("username");
+    const characterSelect = document.getElementById("character");
+    const faceFileInput = document.getElementById("faceFile");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const uploadMsg = document.getElementById("uploadMsg");
+    const previewImg = document.getElementById("preview");
+    const previewText = document.getElementById("previewText");
+    const startBtn = document.getElementById("startBtn");
+    const startError = document.getElementById("startError");
+    const changePlayerBtn = document.getElementById("changePlayer");
+
+    let selectedUsername = "";
+    let selectedCharacter = "";
+    let selectedFaceUrl = null;
+    let characterFaceMap = {};
+
+    async function loadCharacters() {
+      const res = await fetch("/api/characters", { cache: "no-store" });
+      const data = await res.json();
+
+      characterSelect.innerHTML = "";
+      characterFaceMap = {};
+      for (const c of data.characters) {
+        characterFaceMap[c.name] = c.faceUrl;
+        const opt = document.createElement("option");
+        opt.value = c.name;
+        opt.textContent = c.name;
+        characterSelect.appendChild(opt);
+      }
+
+      if (!selectedCharacter) selectedCharacter = data.characters[0]?.name || "";
+      characterSelect.value = selectedCharacter;
+      updatePreviewForSelected();
+    }
+
+    function updatePreviewForSelected() {
+      const ch = characterSelect.value;
+      const url = characterFaceMap[ch] || null;
+
+      selectedCharacter = ch;
+      selectedFaceUrl = url;
+
+      if (url) {
+        previewImg.src = url + `?t=${Date.now()}`;
+        previewText.textContent = "Face found on server.";
+      } else {
+        previewImg.removeAttribute("src");
+        previewText.textContent = "No face uploaded yet.";
+      }
+
+      uploadMsg.textContent = "Upload is optional, but recommended.";
+      uploadMsg.classList.remove("error");
+      startError.textContent = "";
+      startError.classList.remove("error");
+    }
+
+    characterSelect.addEventListener("change", updatePreviewForSelected);
+
+    uploadBtn.addEventListener("click", async () => {
+      const ch = characterSelect.value;
+      const file = faceFileInput.files && faceFileInput.files[0];
+
+      if (!file) {
+        uploadMsg.textContent = "Please choose a file first.";
+        uploadMsg.classList.add("error");
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      uploadMsg.textContent = "Uploading...";
+      uploadMsg.classList.remove("error");
+
+      try {
+        const form = new FormData();
+        form.append("character", ch);
+        form.append("face", file);
+
+        const res = await fetch("/api/upload-face", { method: "POST", body: form });
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) throw new Error(data.error || "Upload failed");
+
+        characterFaceMap[ch] = data.faceUrl;
+        selectedFaceUrl = data.faceUrl;
+
+        previewImg.src = data.faceUrl + `?t=${Date.now()}`;
+        previewText.textContent = "Uploaded successfully.";
+        uploadMsg.textContent = "Upload complete.";
+        dbgEl.textContent = "uploaded";
+      } catch (e) {
+        uploadMsg.textContent = "Upload failed: " + (e.message || "Unknown error");
+        uploadMsg.classList.add("error");
+        dbgEl.textContent = "upload error";
+      } finally {
+        uploadBtn.disabled = false;
+        faceFileInput.value = "";
+      }
+    });
+
+    changePlayerBtn.addEventListener("click", async () => {
+      overlay.style.display = "flex";
+      startError.textContent = "";
+      startError.classList.remove("error");
+      await loadCharacters();
+      usernameInput.focus();
+      setGameEnabled(false);
+      dbgEl.textContent = "overlay open";
+    });
+
+    // --- Game ---
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
 
@@ -176,48 +383,66 @@
     const bestEl = document.getElementById("best");
     const restartBtn = document.getElementById("restart");
 
-    // Game constants (simple, stable)
-    const G = 1800;              // gravity (px/s^2)
-    const FLAP_VY = -520;        // flap impulse (px/s)
-    const PIPE_SPEED = 220;      // px/s
-    const PIPE_WIDTH = 74;       // px
-    const PIPE_GAP = 170;        // px
-    const PIPE_SPAWN_SEC = 1.25; // seconds between pipe spawns
-    const FLOOR_H = 80;          // px
+    const G = 1800;
+    const FLAP_VY = -520;
+    const PIPE_SPEED = 220;
+    const PIPE_WIDTH = 74;
+    const PIPE_GAP = 170;
+    const PIPE_SPAWN_SEC = 1.25;
+    const FLOOR_H = 80;
 
-    // State
-    let bird, pipes, score, best, running, gameOver;
+    // IMPORTANT: initialize everything so nothing is undefined
+    let bird = { x: 120, y: canvas.height * 0.45, r: 18, vy: 0 };
+    let pipes = [];                // <-- always an array
+    let score = 0;
+    let best = 0;
+    let running = false;
+    let gameOver = false;
+
     let lastTs = 0;
     let spawnT = 0;
 
+    // Face image
+    let faceImg = new Image();
+    let faceLoaded = false;
+    let faceSrcActive = "";
+
+    function setFaceFromUrl(url) {
+      faceLoaded = false;
+      faceSrcActive = url || "";
+      if (!url) return;
+
+      faceImg = new Image();
+      faceImg.onload = () => { faceLoaded = true; };
+      faceImg.onerror = () => { faceLoaded = false; };
+      faceImg.src = url + `?t=${Date.now()}`;
+    }
+
+    function setGameEnabled(enabled) {
+      restartBtn.disabled = !enabled;
+    }
+
     function resetGame() {
-      bird = {
-        x: 120,
-        y: canvas.height * 0.45,
-        r: 18,
-        vy: 0
-      };
-      pipes = [];
+      setFaceFromUrl(selectedFaceUrl);
+
+      bird = { x: 120, y: canvas.height * 0.45, r: 18, vy: 0 };
+      pipes = [];          // <-- ensure array every reset
       score = 0;
       running = true;
       gameOver = false;
       spawnT = 0;
+      lastTs = 0;
+
       scoreEl.textContent = "0";
-      // best is kept for this browser session only in Step 2
+      dbgEl.textContent = "running";
     }
 
-    best = 0;
-    bestEl.textContent = String(best);
-    resetGame();
-
     function flap() {
-      if (!running) return;
-      if (gameOver) return;
+      if (!running || gameOver) return;
       bird.vy = FLAP_VY;
     }
 
     function addPipe() {
-      // Choose a gap center with safe margins
       const topMargin = 60;
       const bottomMargin = FLOOR_H + 60;
       const minCenter = topMargin + PIPE_GAP / 2;
@@ -228,14 +453,7 @@
       const bottomY = centerY + PIPE_GAP / 2;
       const bottomH = canvas.height - bottomY - FLOOR_H;
 
-      pipes.push({
-        x: canvas.width + 20,
-        w: PIPE_WIDTH,
-        topH,
-        bottomY,
-        bottomH,
-        passed: false
-      });
+      pipes.push({ x: canvas.width + 20, w: PIPE_WIDTH, topH, bottomY, bottomH, passed: false });
     }
 
     function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) {
@@ -247,13 +465,9 @@
     }
 
     function update(dt) {
-      if (!running) return;
-
-      // Bird physics
       bird.vy += G * dt;
       bird.y += bird.vy * dt;
 
-      // Floor / ceiling
       if (bird.y - bird.r < 0) {
         bird.y = bird.r;
         bird.vy = 0;
@@ -263,18 +477,15 @@
         gameOver = true;
       }
 
-      // Spawn pipes
       spawnT += dt;
       if (spawnT >= PIPE_SPAWN_SEC) {
         spawnT = 0;
         addPipe();
       }
 
-      // Move pipes + scoring
       for (const p of pipes) {
         p.x -= PIPE_SPEED * dt;
 
-        // Score when pipe passes bird
         if (!p.passed && p.x + p.w < bird.x - bird.r) {
           p.passed = true;
           score += 1;
@@ -286,67 +497,82 @@
         }
       }
 
-      // Remove offscreen
       pipes = pipes.filter(p => p.x + p.w > -50);
 
-      // Collisions
       for (const p of pipes) {
-        // top pipe rect: (p.x, 0, p.w, p.topH)
-        if (circleRectCollide(bird.x, bird.y, bird.r, p.x, 0, p.w, p.topH)) {
-          gameOver = true;
-        }
-        // bottom pipe rect: (p.x, p.bottomY, p.w, p.bottomH)
-        if (circleRectCollide(bird.x, bird.y, bird.r, p.x, p.bottomY, p.w, p.bottomH)) {
-          gameOver = true;
-        }
+        if (circleRectCollide(bird.x, bird.y, bird.r, p.x, 0, p.w, p.topH)) gameOver = true;
+        if (circleRectCollide(bird.x, bird.y, bird.r, p.x, p.bottomY, p.w, p.bottomH)) gameOver = true;
       }
+    }
+
+    function drawBirdWithFace() {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI * 2);
+      ctx.closePath();
+
+      ctx.fillStyle = "#7cc4ff";
+      ctx.fill();
+      ctx.clip();
+
+      if (faceSrcActive && faceLoaded) {
+        const size = bird.r * 2;
+        ctx.drawImage(faceImg, bird.x - bird.r, bird.y - bird.r, size, size);
+      } else {
+        ctx.fillStyle = "#0b1220";
+        ctx.fillRect(bird.x - bird.r, bird.y - bird.r, bird.r * 2, bird.r * 2);
+
+        ctx.beginPath();
+        ctx.fillStyle = "#e6edf3";
+        ctx.arc(bird.x + 6, bird.y - 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.strokeStyle = "#22304f";
+      ctx.lineWidth = 2;
+      ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Background parallax-ish stripes (simple, cheap)
       ctx.globalAlpha = 0.12;
-      for (let i = 0; i < 8; i++) {
-        ctx.fillRect(i * 70, 0, 35, canvas.height);
-      }
+      ctx.fillStyle = "#7cc4ff";
+      for (let i = 0; i < 8; i++) ctx.fillRect(i * 70, 0, 35, canvas.height);
       ctx.globalAlpha = 1;
 
-      // Pipes
+      // GUARD: if pipes got corrupted, force it back to an array (prevents crash)
+      if (!Array.isArray(pipes)) pipes = [];
+
       for (const p of pipes) {
-        // top
         ctx.fillStyle = "#3fb950";
         ctx.fillRect(p.x, 0, p.w, p.topH);
-
-        // bottom
         ctx.fillRect(p.x, p.bottomY, p.w, p.bottomH);
 
-        // pipe lips
         ctx.fillStyle = "#2ea043";
         ctx.fillRect(p.x - 6, p.topH - 18, p.w + 12, 18);
         ctx.fillRect(p.x - 6, p.bottomY, p.w + 12, 18);
       }
 
-      // Floor
       ctx.fillStyle = "#0a0f1a";
       ctx.fillRect(0, canvas.height - FLOOR_H, canvas.width, FLOOR_H);
       ctx.fillStyle = "#22304f";
       ctx.fillRect(0, canvas.height - FLOOR_H, canvas.width, 2);
 
-      // Bird (simple circle for now; Step 3 will replace with face image)
-      ctx.beginPath();
-      ctx.fillStyle = "#7cc4ff";
-      ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI * 2);
-      ctx.fill();
+      if (selectedUsername) drawBirdWithFace();
 
-      // Eye
-      ctx.beginPath();
-      ctx.fillStyle = "#0b1220";
-      ctx.arc(bird.x + 6, bird.y - 4, 3, 0, Math.PI * 2);
-      ctx.fill();
+      if (!selectedUsername) {
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // HUD overlay
-      if (gameOver) {
+        ctx.fillStyle = "#e6edf3";
+        ctx.font = "bold 18px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Choose Player to Start", canvas.width / 2, canvas.height / 2);
+      } else if (gameOver) {
         ctx.fillStyle = "rgba(0,0,0,0.55)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -356,53 +582,82 @@
         ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 30);
 
         ctx.font = "16px Arial";
-        ctx.fillText("Press Restart (or R) to play again", canvas.width / 2, canvas.height / 2 + 10);
-      } else {
-        // small start hint when score is 0 and no pipes yet
-        if (score === 0 && pipes.length === 0) {
-          ctx.fillStyle = "rgba(0,0,0,0.25)";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillText("Press Try Again", canvas.width / 2, canvas.height / 2 + 10);
+        dbgEl.textContent = "game over";
+      } else if (score === 0 && pipes.length === 0) {
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          ctx.fillStyle = "#e6edf3";
-          ctx.font = "bold 20px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText("Click / Tap / Space to Flap", canvas.width / 2, canvas.height / 2);
-        }
+        ctx.fillStyle = "#e6edf3";
+        ctx.font = "bold 20px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Tap / Click to Flap", canvas.width / 2, canvas.height / 2);
       }
     }
 
     function loop(ts) {
       if (!lastTs) lastTs = ts;
-      const dt = Math.min(0.033, (ts - lastTs) / 1000); // clamp dt for stability
+      const dt = Math.min(0.033, (ts - lastTs) / 1000);
       lastTs = ts;
 
-      if (running) {
-        if (!gameOver) update(dt);
-        draw();
-      }
+      if (selectedUsername && running && !gameOver) update(dt);
+      draw();
 
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
 
-    // Input
     window.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
         e.preventDefault();
         flap();
       }
-      if (e.key === "r" || e.key === "R") {
-        resetGame();
-      }
     });
-
-    canvas.addEventListener("pointerdown", () => {
-      flap();
-    });
+    canvas.addEventListener("pointerdown", () => flap());
 
     restartBtn.addEventListener("click", () => {
+      if (!selectedUsername) return;
       resetGame();
+      setTimeout(() => flap(), 50);
     });
+
+    startBtn.addEventListener("click", () => {
+      const name = (usernameInput.value || "").trim();
+      if (!name) {
+        startError.textContent = "Username is required.";
+        startError.classList.add("error");
+        return;
+      }
+
+      selectedUsername = name;
+      selectedCharacter = characterSelect.value;
+      selectedFaceUrl = characterFaceMap[selectedCharacter] || null;
+
+      whoEl.textContent = selectedUsername;
+      charLabelEl.textContent = selectedCharacter;
+
+      overlay.style.display = "none";
+      startError.textContent = "";
+      startError.classList.remove("error");
+
+      setGameEnabled(true);
+      resetGame();
+
+      setTimeout(() => flap(), 50);
+      dbgEl.textContent = "started";
+    });
+
+    (async function init() {
+      bestEl.textContent = "0";
+      setGameEnabled(false);
+      overlay.style.display = "flex";
+      whoEl.textContent = "Not set";
+      charLabelEl.textContent = "Not set";
+      dbgEl.textContent = "loading";
+      await loadCharacters();
+      usernameInput.focus();
+      dbgEl.textContent = "ready";
+    })();
   </script>
 </body>
 </html>
