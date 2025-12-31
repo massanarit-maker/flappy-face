@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flappy Face</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #0b1220;
+      color: #e6edf3;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+    button {
+      padding: 10px 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 10px;
+      background: #111a2e;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Flappy Face</h1>
+  <p>Step 1: Server is running</p>
+
+  <button id="check">Check /healthz</button>
+  <div id="status">Not checked yet</div>
+
+  <script>
+    document.getElementById("check").onclick = async () => {
+      const status = document.getElementById("status");
+      status.textContent = "Checking...";
+      try {
+        const res = await fetch("/healthz");
+        const data = await res.json();
+        status.textContent = "OK: " + JSON.stringify(data);
+      } catch (e) {
+        status.textContent = "ERROR: Server not responding";
+      }
+    };
+  </script>
+</body>
+</html>
