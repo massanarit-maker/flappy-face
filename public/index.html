@@ -1,3 +1,4 @@
+<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,44 +6,403 @@
   <title>Flappy Face</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    :root { color-scheme: dark; }
     body {
+      margin: 0;
       background: #0b1220;
       color: #e6edf3;
       font-family: Arial, sans-serif;
-      padding: 30px;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
     }
-    button {
+    .wrap {
+      width: 100%;
+      max-width: 900px;
+    }
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.3px;
+    }
+    .sub {
+      opacity: 0.85;
+      font-size: 14px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #111a2e;
+      border: 1px solid #22304f;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .btn {
       padding: 10px 14px;
-      font-size: 16px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid #22304f;
+      background: #16233f;
+      color: #e6edf3;
       cursor: pointer;
     }
-    #status {
-      margin-top: 20px;
-      padding: 10px;
+    .btn:hover { filter: brightness(1.1); }
+    .panel {
       background: #111a2e;
+      border: 1px solid #22304f;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    #status {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #0b1220;
+      border-radius: 10px;
+      border: 1px solid #22304f;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    /* Game */
+    .gameShell {
+      background: #0b1220;
+      border: 1px solid #22304f;
+      border-radius: 12px;
+      padding: 12px;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: linear-gradient(#0e1a33, #08101f);
+      border-radius: 10px;
+      border: 1px solid #22304f;
+      touch-action: manipulation; /* helps on mobile taps */
+    }
+    .help {
+      margin-top: 10px;
+      opacity: 0.85;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      padding: 2px 6px;
+      border: 1px solid #22304f;
       border-radius: 6px;
+      background: #0b1220;
     }
   </style>
 </head>
 <body>
-  <h1>Flappy Face</h1>
-  <p>Step 1: Server is running</p>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>Flappy Face</h1>
+        <div class="sub">Step 2: Game core (local only). No character select yet.</div>
+      </div>
+      <div class="pill">
+        <span>Score:</span> <span id="score">0</span>
+        <span style="opacity:0.6">|</span>
+        <span>Best:</span> <span id="best">0</span>
+      </div>
+    </div>
 
-  <button id="check">Check /healthz</button>
-  <div id="status">Not checked yet</div>
+    <div class="panel">
+      <div class="row">
+        <button id="check" class="btn" type="button">Check /healthz</button>
+        <button id="restart" class="btn" type="button">Restart</button>
+      </div>
+      <div id="status">Not checked yet</div>
+    </div>
+
+    <div class="gameShell">
+      <canvas id="game" width="420" height="640" aria-label="Flappy game canvas"></canvas>
+      <div class="help">
+        Controls: <span class="kbd">Space</span> or <span class="kbd">Click/Tap</span> to flap.
+        Avoid the pipes. If you crash, press <span class="kbd">Restart</span>.
+      </div>
+    </div>
+  </div>
 
   <script>
+    // --- Health check (keeps Step 1 functionality) ---
     document.getElementById("check").onclick = async () => {
       const status = document.getElementById("status");
       status.textContent = "Checking...";
       try {
-        const res = await fetch("/healthz");
+        const res = await fetch("/healthz", { cache: "no-store" });
         const data = await res.json();
         status.textContent = "OK: " + JSON.stringify(data);
       } catch (e) {
         status.textContent = "ERROR: Server not responding";
       }
     };
+
+    // --- Flappy core (local-only) ---
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const scoreEl = document.getElementById("score");
+    const bestEl = document.getElementById("best");
+    const restartBtn = document.getElementById("restart");
+
+    // Game constants (simple, stable)
+    const G = 1800;              // gravity (px/s^2)
+    const FLAP_VY = -520;        // flap impulse (px/s)
+    const PIPE_SPEED = 220;      // px/s
+    const PIPE_WIDTH = 74;       // px
+    const PIPE_GAP = 170;        // px
+    const PIPE_SPAWN_SEC = 1.25; // seconds between pipe spawns
+    const FLOOR_H = 80;          // px
+
+    // State
+    let bird, pipes, score, best, running, gameOver;
+    let lastTs = 0;
+    let spawnT = 0;
+
+    function resetGame() {
+      bird = {
+        x: 120,
+        y: canvas.height * 0.45,
+        r: 18,
+        vy: 0
+      };
+      pipes = [];
+      score = 0;
+      running = true;
+      gameOver = false;
+      spawnT = 0;
+      scoreEl.textContent = "0";
+      // best is kept for this browser session only in Step 2
+    }
+
+    best = 0;
+    bestEl.textContent = String(best);
+    resetGame();
+
+    function flap() {
+      if (!running) return;
+      if (gameOver) return;
+      bird.vy = FLAP_VY;
+    }
+
+    function addPipe() {
+      // Choose a gap center with safe margins
+      const topMargin = 60;
+      const bottomMargin = FLOOR_H + 60;
+      const minCenter = topMargin + PIPE_GAP / 2;
+      const maxCenter = canvas.height - bottomMargin - PIPE_GAP / 2;
+      const centerY = minCenter + Math.random() * (maxCenter - minCenter);
+
+      const topH = centerY - PIPE_GAP / 2;
+      const bottomY = centerY + PIPE_GAP / 2;
+      const bottomH = canvas.height - bottomY - FLOOR_H;
+
+      pipes.push({
+        x: canvas.width + 20,
+        w: PIPE_WIDTH,
+        topH,
+        bottomY,
+        bottomH,
+        passed: false
+      });
+    }
+
+    function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) {
+      const closestX = Math.max(rx, Math.min(cx, rx + rw));
+      const closestY = Math.max(ry, Math.min(cy, ry + rh));
+      const dx = cx - closestX;
+      const dy = cy - closestY;
+      return (dx * dx + dy * dy) <= (cr * cr);
+    }
+
+    function update(dt) {
+      if (!running) return;
+
+      // Bird physics
+      bird.vy += G * dt;
+      bird.y += bird.vy * dt;
+
+      // Floor / ceiling
+      if (bird.y - bird.r < 0) {
+        bird.y = bird.r;
+        bird.vy = 0;
+      }
+      if (bird.y + bird.r > canvas.height - FLOOR_H) {
+        bird.y = canvas.height - FLOOR_H - bird.r;
+        gameOver = true;
+      }
+
+      // Spawn pipes
+      spawnT += dt;
+      if (spawnT >= PIPE_SPAWN_SEC) {
+        spawnT = 0;
+        addPipe();
+      }
+
+      // Move pipes + scoring
+      for (const p of pipes) {
+        p.x -= PIPE_SPEED * dt;
+
+        // Score when pipe passes bird
+        if (!p.passed && p.x + p.w < bird.x - bird.r) {
+          p.passed = true;
+          score += 1;
+          scoreEl.textContent = String(score);
+          if (score > best) {
+            best = score;
+            bestEl.textContent = String(best);
+          }
+        }
+      }
+
+      // Remove offscreen
+      pipes = pipes.filter(p => p.x + p.w > -50);
+
+      // Collisions
+      for (const p of pipes) {
+        // top pipe rect: (p.x, 0, p.w, p.topH)
+        if (circleRectCollide(bird.x, bird.y, bird.r, p.x, 0, p.w, p.topH)) {
+          gameOver = true;
+        }
+        // bottom pipe rect: (p.x, p.bottomY, p.w, p.bottomH)
+        if (circleRectCollide(bird.x, bird.y, bird.r, p.x, p.bottomY, p.w, p.bottomH)) {
+          gameOver = true;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Background parallax-ish stripes (simple, cheap)
+      ctx.globalAlpha = 0.12;
+      for (let i = 0; i < 8; i++) {
+        ctx.fillRect(i * 70, 0, 35, canvas.height);
+      }
+      ctx.globalAlpha = 1;
+
+      // Pipes
+      for (const p of pipes) {
+        // top
+        ctx.fillStyle = "#3fb950";
+        ctx.fillRect(p.x, 0, p.w, p.topH);
+
+        // bottom
+        ctx.fillRect(p.x, p.bottomY, p.w, p.bottomH);
+
+        // pipe lips
+        ctx.fillStyle = "#2ea043";
+        ctx.fillRect(p.x - 6, p.topH - 18, p.w + 12, 18);
+        ctx.fillRect(p.x - 6, p.bottomY, p.w + 12, 18);
+      }
+
+      // Floor
+      ctx.fillStyle = "#0a0f1a";
+      ctx.fillRect(0, canvas.height - FLOOR_H, canvas.width, FLOOR_H);
+      ctx.fillStyle = "#22304f";
+      ctx.fillRect(0, canvas.height - FLOOR_H, canvas.width, 2);
+
+      // Bird (simple circle for now; Step 3 will replace with face image)
+      ctx.beginPath();
+      ctx.fillStyle = "#7cc4ff";
+      ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eye
+      ctx.beginPath();
+      ctx.fillStyle = "#0b1220";
+      ctx.arc(bird.x + 6, bird.y - 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // HUD overlay
+      if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#e6edf3";
+        ctx.font = "bold 36px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 30);
+
+        ctx.font = "16px Arial";
+        ctx.fillText("Press Restart (or R) to play again", canvas.width / 2, canvas.height / 2 + 10);
+      } else {
+        // small start hint when score is 0 and no pipes yet
+        if (score === 0 && pipes.length === 0) {
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          ctx.fillStyle = "#e6edf3";
+          ctx.font = "bold 20px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("Click / Tap / Space to Flap", canvas.width / 2, canvas.height / 2);
+        }
+      }
+    }
+
+    function loop(ts) {
+      if (!lastTs) lastTs = ts;
+      const dt = Math.min(0.033, (ts - lastTs) / 1000); // clamp dt for stability
+      lastTs = ts;
+
+      if (running) {
+        if (!gameOver) update(dt);
+        draw();
+      }
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    // Input
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        flap();
+      }
+      if (e.key === "r" || e.key === "R") {
+        resetGame();
+      }
+    });
+
+    canvas.addEventListener("pointerdown", () => {
+      flap();
+    });
+
+    restartBtn.addEventListener("click", () => {
+      resetGame();
+    });
   </script>
 </body>
 </html>
